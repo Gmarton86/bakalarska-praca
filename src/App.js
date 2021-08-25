@@ -4,6 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Splash from "./screens/Splash";
 import Home from "./screens/Home";
+import Login from "./screens/Login";
 import { Provider } from "react-redux";
 import { Store } from "./redux/store";
 
@@ -24,6 +25,13 @@ export default function App() {
           <Stack.Screen
             name="Home"
             component={Home}
+            options={{
+              header: () => null,
+            }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={Login}
             options={{
               header: () => null,
             }}

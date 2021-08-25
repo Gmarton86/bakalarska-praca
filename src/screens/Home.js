@@ -54,5 +54,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#4ae",
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 10,
   },
 });
