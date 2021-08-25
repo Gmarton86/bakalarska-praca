@@ -7,8 +7,9 @@ import {
   Text,
   View,
 } from "react-native";
+import TextButton from "../utils/textButtom";
 
-export default function Tournaments() {
+export default function Tournaments({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [Items, setItems] = useState([
     { name: "turnaj 1" },
@@ -21,8 +22,17 @@ export default function Tournaments() {
     //function
     setRefreshing(false);
   };
+
+  const visitLogin = () => {
+    navigation.replace("Login");
+  };
+
   return (
     <View style={styles.body}>
+      <View style={styles.login}>
+        <TextButton title="Prihlásenie" onPressFunction={visitLogin} />
+      </View>
+
       <Text style={styles.text}>Prebiehajúce turnaje</Text>
       <FlatList
         keyExtractor={(item, index) => index.toString()}
@@ -55,5 +65,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
+  },
+  login: {
+    backgroundColor: "#000000",
+    justifyContent: "center",
+    alignItems: "flex-end",
   },
 });
