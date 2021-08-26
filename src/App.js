@@ -5,6 +5,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import Splash from "./screens/Splash";
 import Home from "./screens/Home";
 import Login from "./screens/Login";
+import Create from "./screens/Create";
 import { Provider } from "react-redux";
 import { Store } from "./redux/store";
 
@@ -22,6 +23,7 @@ export default function App() {
           <Stack.Screen name="Splash" component={Splash} />
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Create" component={Create} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

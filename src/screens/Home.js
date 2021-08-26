@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import TextButton from "../utils/textButtom";
+import TextButton from "../utils/textButton";
 
 export default function Tournaments({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
