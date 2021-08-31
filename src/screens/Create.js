@@ -8,19 +8,26 @@ export default function Create({ navigation }) {
   };
 
   return (
-    <View>
-      <View style={styles.backButton}>
+    <View style={styles.body}>
+      {/* <View style={styles.backButton}>
         <BackButton title="back" onPressFunction={visitHome} />
-      </View>
-      <Text>TTT creation</Text>
+      </View> */}
+      <BackButton goBack={visitHome} />
+      <Text>
+        TTT creation
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   backButton: {
+    flex: 1,
     backgroundColor: "#000000",
     justifyContent: "center",
     alignItems: "flex-start",
+  },
+  body: {
+    flex: 1,
   },
 });

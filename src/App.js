@@ -6,8 +6,10 @@ import Splash from "./screens/Splash";
 import Home from "./screens/Home";
 import Login from "./screens/Login";
 import Create from "./screens/Create";
+import ResetPasswordScreen from "./screens/ResetPasswordScreen";
 import { Provider } from "react-redux";
 import { Store } from "./redux/store";
+import Register from "./screens/Register";
 
 const Stack = createStackNavigator();
 
@@ -24,6 +26,11 @@ export default function App() {
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Create" component={Create} />
+          <Stack.Screen
+            name="ResetPasswordScreen"
+            component={ResetPasswordScreen}
+          />
+          <Stack.Screen name="Register" component={Register} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

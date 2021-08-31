@@ -1,10 +1,28 @@
-import React from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  TouchableOpacity,
+} from "react-native";
 import CustomButton from "../utils/customButton";
 import BackButton from "../utils/backButton";
+import { emailValidator } from "../helpers/emailValidator";
+import { passwordValidator } from "../helpers/passwordValidator";
 
 export default function Login({ navigation }) {
-  const login = () => {
+  const [email, setEmail] = useState({ value: "", error: "" });
+  const [password, setPassword] = useState({ value: "", error: "" });
+
+  const onLoginPressed = () => {
+    const emailError = emailValidator(email.value);
+    const passwordError = passwordValidator(password.value);
+    if (emailError || passwordError) {
+      setEmail({ ...email, error: emailError });
+      setPassword({ ...password, error: passwordError });
+      return;
+    }
     //after successful login
     navigation.replace("Create");
   };
@@ -14,27 +32,50 @@ export default function Login({ navigation }) {
   };
 
   return (
-    <View style={styles.background}>
-      <View style={styles.backButton}>
-        <BackButton title="back" onPressFunction={visitHome} />
+    <View style={styles.body}>
+      <BackButton goBack={visitHome} />
+      <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
+      <TextInput
+        style={styles.input}
+        label="Email"
+        returnKeyType="next"
+        value={email.value}
+        onChangeText={(text) => setEmail({ value: text, error: "" })}
+        error={!!email.error}
+        errorText={email.error}
+        autoCapitalize="none"
+        autoCompleteType="email"
+        textContentType="emailAddress"
+        keyboardType="email-address"
+      />
+      <Text style={styles.text}>Zadaj svoje heslo:</Text>
+      <TextInput
+        style={styles.input}
+        label="Password"
+        returnKeyType="done"
+        value={password.value}
+        onChangeText={(text) => setPassword({ value: text, error: "" })}
+        error={!!password.error}
+        errorText={password.error}
+        secureTextEntry
+      />
+      <View style={styles.forgotPassword}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("ResetPasswordScreen")}
+        >
+          <Text style={styles.forgot}>Zabudol si heslo?</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+          <Text style={styles.forgot}>Zaregistruj sa</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.body}>
-        <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="napr. stolnyTenis"
-          maxLength={20}
-        />
-        <Text style={styles.text}>Zadaj svoje heslo:</Text>
-        <TextInput style={styles.input} maxLength={30} secureTextEntry />
 
-        <CustomButton
-          title="Potvrdiť"
-          color="#1eb900"
-          style={{ width: "30%" }}
-          onPressFunction={login}
-        />
-      </View>
+      <CustomButton
+        title="Potvrdiť"
+        color="#1eb900"
+        style={{ width: "30%" }}
+        onPressFunction={onLoginPressed}
+      />
     </View>
   );
 }
@@ -66,5 +107,10 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
+  },
+  forgotPassword: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 20,
   },
 });
