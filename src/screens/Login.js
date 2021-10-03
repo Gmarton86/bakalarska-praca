@@ -1,30 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   TextInput,
   View,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import CustomButton from "../utils/customButton";
 import BackButton from "../utils/backButton";
 import { emailValidator } from "../helpers/emailValidator";
 import { passwordValidator } from "../helpers/passwordValidator";
+import SQLite from "react-native-sqlite-storage";
+
+const db = SQLite.openDatabase(
+  {
+    name: "LoginDB",
+    location: "default",
+  },
+  () => {},
+  (error) => {
+    console.log(error);
+  }
+);
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState({ value: "", error: "" });
   const [password, setPassword] = useState({ value: "", error: "" });
 
+  // useEffect(() => {
+  //   getData();
+  // }, [])
+
+  // const getData = () => {
+  //   try {
+        
+  //     db.transaction((tx) => {
+  //       tx.executeSql(
+  //         "SELECT Username, Password FROM Users",
+  //         [],
+  //         (tx, results) => {
+  //           var len = results.rows.length;
+  //           if (len > 0) {
+  //             var username = results.rows.item(0).Username;
+  //             var password = results.rows.item(0).Password;
+  //             setEmailDB(toString(username));
+  //               setPasswordDB(toString(password));
+  //           }
+  //         }
+  //       );
+  //     });
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
+
+
   const onLoginPressed = () => {
-    const emailError = emailValidator(email.value);
-    const passwordError = passwordValidator(password.value);
-    if (emailError || passwordError) {
-      setEmail({ ...email, error: emailError });
-      setPassword({ ...password, error: passwordError });
-      return;
-    }
-    //after successful login
-    navigation.replace("Create");
+      try {
+        
+        db.transaction((tx) => {
+          tx.executeSql(
+            "SELECT Username, Password FROM Users WHERE Username = ? and Password = ?",
+            [email.value, password.value],
+            (tx, results) => {
+              var len = results.rows.length;
+              if (len > 0) {
+                navigation.replace("Create");
+              } else {
+                Alert.alert('Nesprávne meno alebo heslo', 'Vytvorte konto alebo resetujte heslo.')
+              }
+            }
+          );
+        });
+      } catch (error) {
+        console.log(error);
+      }
   };
 
   const visitHome = () => {
@@ -34,7 +85,9 @@ export default function Login({ navigation }) {
   return (
     <View style={styles.body}>
       <BackButton goBack={visitHome} />
-      <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
+      <Text style={styles.text}>
+        Zadaj svoje uživateľské meno:
+      </Text>
       <TextInput
         style={styles.input}
         label="Email"
@@ -48,7 +101,7 @@ export default function Login({ navigation }) {
         textContentType="emailAddress"
         keyboardType="email-address"
       />
-      <Text style={styles.text}>Zadaj svoje heslo:</Text>
+      <Text style={styles.text}>Zadaj svoje heslo: </Text>
       <TextInput
         style={styles.input}
         label="Password"
