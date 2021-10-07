@@ -13,9 +13,9 @@ export default function Create({ navigation }) {
         <BackButton title="back" onPressFunction={visitHome} />
       </View> */}
       <BackButton goBack={visitHome} />
-      <Text>
-        TTT creation
-      </Text>
+      <View>
+        <Text>TTT creation</Text>
+      </View>
     </View>
   );
 }

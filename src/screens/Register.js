@@ -18,7 +18,7 @@ const db = SQLite.openDatabase(
   {
     name: "LoginDB",
     location: "default",
-    createFromLocation: '../db/LoginDB.db'
+    createFromLocation: "../db/LoginDB.db",
   },
   () => {},
   (error) => {
@@ -36,9 +36,26 @@ export default function Register({ navigation }) {
       tx.executeSql(
         "CREATE TABLE IF NOT EXISTS " +
           "Users " +
-          "(ID INTEGER PRIMARY KEY AUTOINCREMENT, Username TEXT, Password TEXT); "
+          "(ID INTEGER PRIMARY KEY AUTOINCREMENT, Username TEXT, Password TEXT, TrainerUsr TEXT, TrainerPasswd TEXT, tournamentID INTEGER); "
       );
     });
+
+    tx.executeSql(
+      "CREATE TABLE IF NOT EXISTS " +
+        "Players " +
+        "(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Username TEXT, DateOfBirth INTEGER, Rank INTEGER); "
+    );
+  };
+
+  const generateString = (length) => {
+    var result = "";
+    var characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
   };
 
   const [name, setName] = useState({ value: "", error: "" });
@@ -56,26 +73,32 @@ export default function Register({ navigation }) {
       return;
     } else {
       try {
-
         db.transaction((tx) => {
           tx.executeSql(
-            "SELECT Username FROM Users WHERE Username = ?", [email.value],
+            "SELECT Username FROM Users WHERE Username = ?",
+            [email.value],
             (tx, results) => {
               var len = results.rows.length;
-              console.log('item:', results.rows.length);
+              console.log("item:", results.rows.length);
               if (len > 0) {
-                Alert.alert('Použivateľ existuje!', 'Použite iný email alebo obnovte heslo.')
-              } else {
-                tx.executeSql(
-                       "INSERT INTO Users (Username, Password) VALUES (?, ?)",
-                       [email.value, password.value]
+                Alert.alert(
+                  "Použivateľ existuje!",
+                  "Použite iný email alebo obnovte heslo."
                 );
-                Alert.alert('Úspešné', 'Použivateľ bol vytvorený úspešne.')
+              } else {
+                var trainerUsr = "trainer";
+                var trainerPasswd = generateString(7);
+                console.log(trainerPasswd);
+                console.log(trainerUsr);
+                tx.executeSql(
+                  "INSERT INTO Users (Username, Password, TrainerUsr, TrainerPasswd) VALUES (?, ?, ?, ?)",
+                  [email.value, password.value, trainerUsr, trainerPasswd]
+                );
+                Alert.alert("Úspešné", "Zapíš si trenerové údaje! Meno: " + trainerUsr + ", Heslo: " + trainerPasswd);
               }
             }
           );
         });
-
 
         //  db.transaction( (tx) => {
         //    tx.executeSql(
@@ -86,25 +109,28 @@ export default function Register({ navigation }) {
 
         // db.transaction((tx) => {
         //   tx.executeSql(
-        //     "SELECT Username, Password FROM Users", [],
+        //     "SELECT * FROM Users", [],
         //     (tx, results) => {
         //       var len = results.rows.length;
         //       console.log('item:', results.rows.length);
-        //       if (len > 0) {
-        //         var userName = results.rows.item(0).Username;
-        //         var pass = results.rows.item(0).Password;
-        //         setEmailDB(userName);
-        //         setPasswordDB(pass);
-        //         console.log(emailDB);
-        //       }
+        //       console.log(results.rows.item(0).Username);
+        //       console.log(results.rows.item(0).Password)
+        //       // if (len > 0) {
+        //       //   var userName = results.rows.item(0).Username;
+        //       //   var pass = results.rows.item(0).Password;
+        //       //   setEmailDB(userName);
+        //       //   setPasswordDB(pass);
+        //       //   console.log(emailDB);
+        //       // }
         //     }
         //   );
         // });
         // db.transaction((tx) => {
         //   tx.executeSql(
-        //     "DELETE FROM USERS", [], () => {console.log('success')}, error => {console.log(error)} 
+        //     "DELETE FROM Users", [], () => {console.log('success')}, error => {console.log(error)}
         //   )
         // })
+        
         navigation.replace("Login");
       } catch (error) {
         console.log(error);

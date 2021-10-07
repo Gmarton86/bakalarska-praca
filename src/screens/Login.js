@@ -58,7 +58,6 @@ export default function Login({ navigation }) {
 
   const onLoginPressed = () => {
       try {
-        
         db.transaction((tx) => {
           tx.executeSql(
             "SELECT Username, Password FROM Users WHERE Username = ? and Password = ?",
@@ -68,7 +67,7 @@ export default function Login({ navigation }) {
               if (len > 0) {
                 navigation.replace("Create");
               } else {
-                Alert.alert('Nesprávne meno alebo heslo', 'Vytvorte konto alebo resetujte heslo.')
+                Alert.alert('Nesprávne meno alebo heslo!', 'Vytvorte konto alebo resetujte heslo.')
               }
             }
           );
