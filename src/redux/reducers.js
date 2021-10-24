@@ -1,19 +1,17 @@
-import { SET_TASKS, SET_TASK_ID } from './actions';
+import { SET_PLAYER_NAME, SET_PLAYER_RANK } from './actions'
 
 const initialState = {
-    tasks: [],
-    taskID: 1,
+    name: '',
+    rank: 0,
 }
 
-function taskReducer(state = initialState, action) {
+export default function playerReducer(state = initialState, action) {
     switch (action.type) {
-        case SET_TASKS:
-            return { ...state, tasks: action.payload };
-        case SET_TASK_ID:
-            return { ...state, taskID: action.payload };
+        case SET_PLAYER_NAME:
+            return {...state, name: action.payload }
+        case SET_PLAYER_RANK:
+            return {...state, rank: action.payload }
         default:
-            return state;
+            return state
     }
 }
-
-export default taskReducer;
