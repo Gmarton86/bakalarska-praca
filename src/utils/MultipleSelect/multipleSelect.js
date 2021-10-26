@@ -63,11 +63,8 @@ export default function MultipleSelect() {
         }}
         onSelectedItemsChange={onSelectedItemsChange}
         selectedItems={selected}
-        //onSelectedItemsChange={onSelectedItemsChange}
-        //selectedItems={addSelectedPlayers(selectedItems)}
-        selectText="Pick Items"
-        searchInputPlaceholderText="Search Items..."
-        onChangeInput={(text) => console.log(text)}
+        selectText="Vyber hračov"
+        searchInputPlaceholderText="Hľadaj hračov..."
         altFontFamily="ProximaNova-Light"
         tagRemoveIconColor="#CCC"
         tagBorderColor="#CCC"
@@ -78,13 +75,8 @@ export default function MultipleSelect() {
         displayKey="name"
         searchInputStyle={{ color: '#CCC' }}
         submitButtonColor="#CCC"
-        submitButtonText="Submit"
+        submitButtonText="Potvrdiť"
       />
-      {/* <View>
-          {reference
-            ? reference.getSelectedItemsExt(selectedItems)
-            : null}
-        </View> */}
     </View>
   )
 }
