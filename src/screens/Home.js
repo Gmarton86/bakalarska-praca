@@ -32,12 +32,8 @@ export default function Tournaments({ navigation }) {
   const [refreshing, setRefreshing] = useState(false)
   const [tournament, setTournament] = useState([{name: 'help'}])
 
-
-  const findName = (object, name) => {
-    return object.name === name ? 1 : 0
-  }
-
   const renderTournaments = async () => {
+    tournament.pop()
     try {
       db.transaction((tx) => {
         tx.executeSql(

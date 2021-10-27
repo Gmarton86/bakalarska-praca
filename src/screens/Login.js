@@ -86,8 +86,9 @@ export default function Login({ navigation }) {
   }
 
   return (
-    <View style={styles.body}>
+    <View style={styles.background}>
       <BackButton goBack={visitHome} />
+    <View style={styles.body}>
       <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
       <TextInput
         style={styles.input}
@@ -131,6 +132,7 @@ export default function Login({ navigation }) {
         onPressFunction={onLoginPressed}
       />
     </View>
+    </View>
   )
 }
 
@@ -153,11 +155,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     textAlign: 'center',
     fontSize: 20,
-  },
-  backButton: {
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
   },
   background: {
     flex: 1,
