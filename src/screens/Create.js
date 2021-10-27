@@ -28,7 +28,7 @@ export default function Create({ navigation }) {
   const [selected, setSelected] = useState([])
   const [reference, setReference] = useState()
   const [name, setName] = useState({value: ''})
-  const [NumberOfTables, setNumberOfTables] = useState()
+  const [NumberOfTables, setNumberOfTables] = useState({value: '0'})
 
   useEffect(() => {
     renderPlayers()
@@ -50,13 +50,14 @@ export default function Create({ navigation }) {
     navigation.replace('Home')
   }
 
+
   const renderPlayers = () => {
     try {
       db.transaction((tx) => {
         tx.executeSql('SELECT * FROM Players ', [], (tx, results) => {
           var len = results.rows.length
           console.log('Number of players: ' + len)
-          if (len > 1) {
+          if (len > 0) {
             for (let i = 0; i < len; i++) {
               var name =
                 results.rows.item(i).Name + ' ' + results.rows.item(i).Username
@@ -104,6 +105,7 @@ export default function Create({ navigation }) {
             for (let i = 0; i < len; i++) {
               console.log(results.rows.item(i))
             }
+            visitHome()
           }
         })
       })
@@ -111,9 +113,6 @@ export default function Create({ navigation }) {
       console.log(error)
     }
     
-    console.log(selected[2])
-    console.log(name.value)
-    console.log(NumberOfTables.value)
   }
 
   const onSelectedItemsChange = (selectedItems) => {
@@ -146,7 +145,7 @@ export default function Create({ navigation }) {
             placeholder="Číslo"
             keyboardType="numeric"
             maxLength={2}
-            value={Number}
+            value={NumberOfTables.value}
             onChangeText={(text) => setNumberOfTables({ value: text })}
           />
         </View>

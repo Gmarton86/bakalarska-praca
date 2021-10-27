@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react'
 import {
   FlatList,
   RefreshControl,
@@ -6,26 +6,76 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import TextButton from "../utils/textButton";
+} from 'react-native'
+import TextButton from '../utils/textButton'
+import SQLite from 'react-native-sqlite-storage'
+import CustomButton from '../utils/customButton'
+
+const db = SQLite.openDatabase(
+  {
+    name: 'LoginDB',
+    location: 'default',
+    createFromLocation: '../db/LoginDB.db',
+  },
+  () => {},
+  (error) => {
+    console.log(error)
+  }
+)
 
 export default function Tournaments({ navigation }) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [Items, setItems] = useState([
-    { name: "turnaj 1" },
-    { name: "turnaj 2" },
-    { name: "turnaj 3" },
-  ]);
+
+  useEffect(() => {
+    renderTournaments()
+  }, [])
+
+  const [refreshing, setRefreshing] = useState(false)
+  const [tournament, setTournament] = useState([{name: 'help'}])
+
+
+  const findName = (object, name) => {
+    return object.name === name ? 1 : 0
+  }
+
+  const renderTournaments = async () => {
+    try {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'SELECT Name FROM Tournaments GROUP BY Name',
+          [],
+          (tx, results) => {
+            var len = results.rows.length
+            console.log(len)
+            console.log('Number of tournaments: ' + len)
+            if (len > 0) {
+              for (let i = 0; i < len; i++) {
+                var name = results.rows.item(i).Name
+                let prototype = {name}
+                console.log(name)
+                tournament.push(prototype)
+                console.log(tournament.length + '\n')
+              }
+            }
+          }
+        )
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const onRefresh = () => {
-    setRefreshing(true);
-    //function
-    setRefreshing(false);
-  };
+    setRefreshing(true)
+    setRefreshing(false)
+  }
 
   const visitLogin = () => {
-    navigation.replace("Login");
-  };
+    navigation.replace('Login')
+  }
+
+  const visitTournament = () => {
+    navigation.replace('Tournament')
+  }
 
   return (
     <View style={styles.body}>
@@ -36,10 +86,15 @@ export default function Tournaments({ navigation }) {
       <Text style={styles.text}>Prebiehajúce turnaje</Text>
       <FlatList
         keyExtractor={(item, index) => index.toString()}
-        data={Items}
+        data={tournament}
         renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text style={styles.text}>{item.name}</Text>
+          <View>
+            <CustomButton
+              title={item.name}
+              color="#1eb900"
+              style={{ width: '80%', marginTop: 24}}
+              onPressFunction={visitTournament}
+            />
           </View>
         )}
         refreshControl={
@@ -47,28 +102,28 @@ export default function Tournaments({ navigation }) {
         }
       />
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   body: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     flex: 1,
   },
   text: {
     fontSize: 30,
-    color: "#000000",
+    color: '#000000',
   },
   item: {
     margin: 5,
-    backgroundColor: "#4ae",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#4ae',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 10,
   },
   login: {
-    backgroundColor: "#000000",
-    justifyContent: "center",
-    alignItems: "flex-end",
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
-});
+})

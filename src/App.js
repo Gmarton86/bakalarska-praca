@@ -10,6 +10,7 @@ import ResetPasswordScreen from "./screens/ResetPasswordScreen";
 import { Provider } from "react-redux";
 import { Store } from "./redux/store";
 import Register from "./screens/Register";
+import Tournament from "./screens/Tournament";
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,7 @@ export default function App() {
             component={ResetPasswordScreen}
           />
           <Stack.Screen name="Register" component={Register} />
+          <Stack.Screen name="Tournament" component={Tournament} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
