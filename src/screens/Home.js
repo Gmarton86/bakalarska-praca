@@ -69,10 +69,6 @@ export default function Tournaments({ navigation }) {
     navigation.replace('Login')
   }
 
-  const visitTournament = () => {
-    navigation.replace('Tournament')
-  }
-
   return (
     <View style={styles.body}>
       <View style={styles.login}>
@@ -89,7 +85,9 @@ export default function Tournaments({ navigation }) {
               title={item.name}
               color="#1eb900"
               style={{ width: '80%', marginTop: 24}}
-              onPressFunction={visitTournament}
+              onPressFunction={() => {
+                /* 1. Navigate to the Details route with params */
+                navigation.navigate('Tournament', item);}}
             />
           </View>
         )}

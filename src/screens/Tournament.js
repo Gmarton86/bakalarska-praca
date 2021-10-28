@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, FlatList } from 'react-native'
 import BackButton from '../utils/backButton'
 
-export default function Tournament({ navigation }) {
+export default function Tournament({ route, navigation }) {
   const [match, setMatch] = useState([{ value: 'item' }, {value: 'ok'}])
+  const { name } = route.params;
+
+  useEffect(() => {
+    console.log(name)
+  }, [])
 
   const visitHome = () => {
     navigation.replace('Home')
