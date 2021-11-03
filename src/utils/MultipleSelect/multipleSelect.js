@@ -16,9 +16,9 @@ const db = SQLite.openDatabase(
   }
 )
 
-export default function MultipleSelect() {
+export default function MultipleSelect([{selected, setSelected}]) {
   const [players, setPlayers] = useState([])
-  const [selected, setSelected] = useState([])
+  //const [selected, setSelected] = useState([])
   const [reference, setReference] = useState()
 
   useEffect(() => {

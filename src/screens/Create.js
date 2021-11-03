@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setName, setRank } from '../redux/actions'
 import playerReducer from '../redux/reducers'
 import CustomButton from '../utils/customButton'
+import { LogBox } from 'react-native';
 
 const db = SQLite.openDatabase(
   {
@@ -31,6 +32,7 @@ export default function Create({ navigation }) {
   const [NumberOfTables, setNumberOfTables] = useState({value: '0'})
 
   useEffect(() => {
+    LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
     renderPlayers()
     createTable()
     //console.log(name)
@@ -122,7 +124,7 @@ export default function Create({ navigation }) {
 
   return (
     <View style={styles.body}>
-      <ScrollView>
+      <ScrollView nestedScrollEnabled={true}>
         <BackButton goBack={visitHome} />
         <Text style={styles.text}>Tournament creation</Text>
         <View>
@@ -212,5 +214,6 @@ const styles = StyleSheet.create({
     width: 300,
     borderRadius: 5,
     marginTop: 30,
+    flex: 1,
   },
 })

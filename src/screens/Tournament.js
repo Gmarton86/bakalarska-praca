@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, FlatList } from 'react-native'
+import { View, Text, StyleSheet, FlatList, ScrollView } from 'react-native'
 import BackButton from '../utils/backButton'
-import SQLite from "react-native-sqlite-storage"
+import SQLite from 'react-native-sqlite-storage'
 
 const db = SQLite.openDatabase(
   {
@@ -16,16 +16,15 @@ const db = SQLite.openDatabase(
 )
 
 export default function Tournament({ route, navigation }) {
-  const [match, setMatch] = useState([{ value: 'item' }, {value: 'ok'}])
+  const [match, setMatch] = useState([{ playerOne: 'a', playerTwo: 'b' }])
   const [player, setPlayer] = useState([])
-  const { name } = route.params;
-
+  const { name } = route.params
 
   useEffect(() => {
     passTournamentData()
   }, [])
 
-  const passTournamentData = async () => {
+  const passTournamentData = () => {
     try {
       db.transaction((tx) => {
         tx.executeSql(
@@ -33,23 +32,76 @@ export default function Tournament({ route, navigation }) {
           [name],
           (tx, results) => {
             var len = results.rows.length
-            for(let i = 0; i < len; i++){
-              let name = results.rows.item(i).Name + ' ' + results.rows.item(i).Username
+            for (let i = 0; i < len; i++) {
+              let name =
+                results.rows.item(i).Name + ' ' + results.rows.item(i).Username
               let rank = results.rows.item(i).Rank
-              let c = {name, rank}
+              let c = { name, rank }
               player.push(c)
+              //console.log(player[i])
+            }
+            //console.log('\n')
+            player.sort((a, b) => {
+              return parseInt(a.rank) - parseInt(b.rank)
+            })
+            for (let i = 0; i < player.length; i++) {
               console.log(player[i])
             }
-            console.log('\n')
-            player.sort((a, b) => {return parseInt(a.rank) - parseInt(b.rank)})
-            for(let i = 0; i < player.length; i++){
-              console.log(player[i])
-            }
+            renderMatches()
           }
         )
       })
     } catch (error) {
       console.log(error)
+    }
+  }
+
+  const renderMatches = () => {
+    match.pop()
+    var algorithm
+    if (player.length <= 16) {
+      algorithm = 8
+    } else if (player.length <= 32) {
+      algorithm = 16
+    } else if (player.length <= 64) {
+      algorithm = 32
+    } else {
+      algorithm = 64
+    }
+    var numberOfFreeMatches = algorithm * 2 - player.length
+    var counter = numberOfFreeMatches
+
+    for (var i = 0; i < algorithm; i += 2) {
+      let playerOne
+      let playerTwo
+      if (counter != 0) {
+        playerOne = player[i].name
+        playerTwo = ''
+      } else {
+        playerOne = player[i].name
+        playerTwo = player[player.length - 1 - i].name
+      }
+      let war = { playerOne, playerTwo }
+      match.push(war)
+    }
+    for (var i = algorithm - 1; i >= 0; i -= 2) {
+      let playerOne
+      let playerTwo
+      if (counter != 0) {
+        playerOne = player[i].name
+        playerTwo = ''
+      } else {
+        playerOne = player[i].name
+        playerTwo = player[player.length - 1 - i].name
+      }
+      let war = { playerOne, playerTwo }
+      match.push(war)
+    }
+    if (counter != 0) {
+      for (var i = 0; i < player.length - algorithm; i++) {
+        match[match.length - 1 - i].playerTwo =
+          player[player.length + i - (player.length - algorithm)].name
+      }
     }
   }
 
@@ -68,10 +120,10 @@ export default function Tournament({ route, navigation }) {
         data={match}
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <Text style={styles.text}>{item.value}</Text>
+            <Text style={styles.text}>{item.playerOne}</Text>
+            <Text style={styles.text}>{item.playerTwo}</Text>
           </View>
         )}
-       
       />
     </View>
   )

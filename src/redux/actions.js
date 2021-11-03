@@ -1,16 +1,16 @@
-export const SET_TASKS = 'SET_TASKS';
-export const SET_TASK_ID = 'SET_TASK_ID';
+export const SET_PLAYER_NAME = 'SET_PLAYER_NAME';
+export const SET_PLAYER_RANK = 'SET_PLAYER_RANK';
 
-export const setTasks = tasks => dispatch => {
+export const setName = name => dispatch => {
     dispatch({
-        type: SET_TASKS,
-        payload: tasks,
+        type: SET_PLAYER_NAME,
+        payload: name,
     });
 };
 
-export const setTaskID = taskID => dispatch => {
+export const setRank = rank => dispatch => {
     dispatch({
-        type: SET_TASK_ID,
-        payload: taskID,
+        type: SET_PLAYER_RANK,
+        payload: rank,
     });
 };
