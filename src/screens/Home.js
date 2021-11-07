@@ -32,12 +32,13 @@ export default function Tournaments({ navigation }) {
   const [refreshing, setRefreshing] = useState(false)
   const [tournament, setTournament] = useState([{name: 'help'}])
 
+
   const renderTournaments = async () => {
     tournament.pop()
     try {
       db.transaction((tx) => {
         tx.executeSql(
-          'SELECT Name FROM Tournaments GROUP BY Name',
+          'SELECT Name FROM Tournaments',
           [],
           (tx, results) => {
             var len = results.rows.length

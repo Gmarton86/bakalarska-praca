@@ -1,5 +1,12 @@
 import React, { useState, useEffect, Component } from 'react'
-import { StyleSheet, Text, View, TextInput, ScrollView } from 'react-native'
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  ScrollView,
+  Alert,
+} from 'react-native'
 import BackButton from '../utils/backButton'
 import MultiSelect from 'react-native-multiple-select'
 import SQLite from 'react-native-sqlite-storage'
@@ -7,7 +14,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setName, setRank } from '../redux/actions'
 import playerReducer from '../redux/reducers'
 import CustomButton from '../utils/customButton'
-import { LogBox } from 'react-native';
+import { LogBox } from 'react-native'
+import { set } from 'react-native-reanimated'
 
 const db = SQLite.openDatabase(
   {
@@ -27,23 +35,30 @@ export default function Create({ navigation }) {
 
   const [players, setPlayers] = useState([])
   const [selected, setSelected] = useState([])
+  const [competitor, setCompetitor] = useState([])
   const [reference, setReference] = useState()
-  const [name, setName] = useState({value: ''})
-  const [NumberOfTables, setNumberOfTables] = useState({value: '0'})
+  const [name, setName] = useState({ value: '' })
+  const [NumberOfTables, setNumberOfTables] = useState({ value: '0' })
+  const [match, setMatch] = useState([])
 
   useEffect(() => {
-    LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
-    renderPlayers()
+    LogBox.ignoreLogs(['VirtualizedLists should never be nested'])
     createTable()
+    renderPlayers()
     //console.log(name)
   }, [])
 
   const createTable = () => {
     db.transaction((tx) => {
+      // tx.executeSql(
+      //   'CREATE TABLE IF NOT EXISTS ' +
+      //     'Tournaments ' +
+      //     '(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Tables INTEGER, AdminID INTEGER); '
+      // )
       tx.executeSql(
         'CREATE TABLE IF NOT EXISTS ' +
-          'Tournaments ' +
-          '(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name UNIQUE TEXT, Tables NUMBER, AdminID NUMBER, PlayerID NUMBER); '
+          'Matches ' +
+          '(ID INTEGER PRIMARY KEY AUTOINCREMENT, TournamentName TEXT, Player1ID INTEGER, Player2ID INTEGER, WinnerID INTEGER, Stol INTEGER); '
       )
     })
   }
@@ -52,6 +67,65 @@ export default function Create({ navigation }) {
     navigation.replace('Home')
   }
 
+  const sortPlayers = () => {
+    competitor.sort((a, b) => {
+      return parseInt(a.rank) - parseInt(b.rank)
+    })
+  }
+
+  const selectAlgorithm = () => {
+    if (competitor.length <= 8) {
+      Alert.alert('Minimálný počet hračov je 9')
+      return 0
+    }
+    if (competitor.length <= 16) {
+      return 8
+    } else if (competitor.length <= 32) {
+      return 16
+    } else if (competitor.length <= 64) {
+      return 32
+    } else {
+      return 64
+    }
+  }
+
+  const renderMatches = () => {
+    var algorithm = selectAlgorithm()
+
+    var counter = algorithm * 2 - competitor.length
+
+    var playerOne
+    var playerTwo
+    var war
+    for (var i = 0; i < algorithm; i += 2) {
+      if (counter != 0) {
+        playerOne = competitor[i].id
+        playerTwo = 0
+      } else {
+        playerOne = competitor[i].id
+        playerTwo = competitor[competitor.length - 1 - i].id
+      }
+      war = { playerOne, playerTwo }
+      match.push(war)
+    }
+    for (var i = algorithm - 1; i >= 0; i -= 2) {
+      if (counter != 0) {
+        playerOne = competitor[i].id
+        playerTwo = 0
+      } else {
+        playerOne = competitor[i].id
+        playerTwo = competitor[competitor.length - 1 - i].id
+      }
+      war = { playerOne, playerTwo }
+      match.push(war)
+    }
+    if (counter != 0) {
+      for (var i = 0; i < competitor.length - algorithm; i++) {
+        match[match.length - 1 - i].playerTwo =
+          competitor[competitor.length + i - (competitor.length - algorithm)].id
+      }
+    }
+  }
 
   const renderPlayers = () => {
     try {
@@ -64,63 +138,112 @@ export default function Create({ navigation }) {
               var name =
                 results.rows.item(i).Name + ' ' + results.rows.item(i).Username
               var id = results.rows.item(i).ID.toString()
-              let player = { name, id }
+              let rank = results.rows.item(i).Rank
+              let player = { id, name, rank }
               //console.log(player)
               players.push(player)
             }
           }
         })
+
+        tx.executeSql(
+          'SELECT * FROM sqlite_master WHERE type=?', ['table'],
+          (tx, results) => {
+            var len = results.rows.length
+            for(let i = 0; i < len; i++){
+              console.log("exist: " + results.rows.item(i).name)
+            }
+          }
+        )
+        // tx.executeSql(
+        //   'INSERT INTO Tournaments (Name, Tables, AdminID) VALUES (?, ?, ?)',
+        //   //insert adminID
+        //   ['ok', 3, 1]
+        // )
+          //  tx.executeSql(
+          //   "DELETE FROM Matches", [], () => {console.log('success')}, error => {console.log(error)}
+          // )
+          // tx.executeSql(
+          //   "DELETE FROM Tournaments", [], () => {console.log('success')}, error => {console.log(error)}
+          // )
+        tx.executeSql(
+          'SELECT Name FROM Tournaments',
+          [],
+          (tx, results) => {
+            var len = results.rows.length
+            console.log('Number of tournaments: ' + len)
+          }
+        )
+        tx.executeSql(
+          'SELECT * FROM Matches',
+          [],
+          (tx, results) => {
+            var len = results.rows.length
+            console.log('Number of Matches: '+ len)
+          }
+        )
       })
     } catch (error) {
       console.log(error)
     }
   }
 
+  const generateTournamentMatches = () => {
+    for (let i = 0; i < selected.length; i++) {
+      let a = players.filter((player) => player.id === selected[i])
+      competitor.push(a[0])
+    }
+    sortPlayers()
+    renderMatches()
+  }
+
   const createTournament = () => {
-
     var tables = parseInt(NumberOfTables.value)
-
+    console.log(tables)
+    console.log(name.value)
     try {
       db.transaction((tx) => {
-        tx.executeSql('SELECT * FROM Users ', [], (tx, results) => {
-          var len = results.rows.length
-          console.log('Number of users: ' + len)
-          if (len >= 1) {
-            for (let i = 0; i < len; i++) {
-              console.log(results.rows.item(i))
-            }
-          }
-        })
+        // tx.executeSql('SELECT * FROM Users ', [], (tx, results) => {
+        //   var len = results.rows.length
+        //   console.log('Number of users: ' + len)
+        //   if (len >= 1) {
+        //     for (let i = 0; i < len; i++) {
+        //       console.log(results.rows.item(i))
+        //     }
+        //   }
+        // })
 
-        for(var i = 0; i < selected.length; i++){
+        tx.executeSql(
+          'INSERT INTO Tournaments (Name, Tables, AdminID) VALUES (?, ?, ?)',
+          //insert adminID
+          [name.value, tables, 1]
+        )
+
+          generateTournamentMatches()
+
+        for (var i = 0; i < match.length; i++) {
           tx.executeSql(
-            'INSERT INTO Tournaments (Name, Tables, AdminID, PlayerID) VALUES (?, ?, ?, ?)',
-            [name.value, tables , 1, selected[i]]
+            'INSERT INTO Matches (TournamentName, Player1ID, Player2ID) VALUES (?, ?, ?)',
+            [
+              name.value,
+              match[i].playerOne,
+              match[i].playerTwo,
+            ]
           )
         }
-        
+        // console.log('success')
 
-        tx.executeSql('SELECT * FROM Tournaments ', [], (tx, results) => {
-          var len = results.rows.length
-          console.log('Number of tournaments: ' + len)
-          if (len >= 1) {
-            for (let i = 0; i < len; i++) {
-              console.log(results.rows.item(i))
-            }
-            visitHome()
-          }
-        })
+        visitHome()
+  
       })
     } catch (error) {
       console.log(error)
     }
-    
   }
 
   const onSelectedItemsChange = (selectedItems) => {
     setSelected(selectedItems)
   }
-
 
   return (
     <View style={styles.body}>

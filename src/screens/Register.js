@@ -330,6 +330,11 @@ export default function Register({ navigation }) {
           'Players ' +
           '(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Username TEXT, DateOfBirth INTEGER, Rank INTEGER); '
       )
+      tx.executeSql(
+        'CREATE TABLE IF NOT EXISTS ' +
+          'Matches ' +
+          '(ID INTEGER PRIMARY KEY AUTOINCREMENT, TournamentName TEXT, PlayerOneID INTEGER, PlayerTwoID INTEGER, WinnerID INTEGER, Table INTEGER); '
+      )
     })
   }
 
