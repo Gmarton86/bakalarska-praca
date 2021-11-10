@@ -35,7 +35,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
-    "prettier": "2.4.1"
+    "prettier": "2.4.1",
+    "tailwind-react-native-classnames": "^1.5.1"
   },
   "private": true,
   "name": "App",
