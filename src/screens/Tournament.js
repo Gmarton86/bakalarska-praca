@@ -6,6 +6,7 @@ import {
   FlatList,
   ScrollView,
   TextInput,
+  TouchableOpacity,
 } from 'react-native'
 import BackButton from '../utils/backButton'
 import SQLite from 'react-native-sqlite-storage'
@@ -25,12 +26,18 @@ const db = SQLite.openDatabase(
 
 export default function Tournament({ route, navigation }) {
   const [match, setMatch] = useState([
-    { playerOne: {id: 0, name: '', username: ''}, playerTwo: {id: 0, name: '', username: ''}, table: 0, winner: '0' },
+    {
+      playerOne: { id: 0, name: '', username: '' },
+      playerTwo: { id: 0, name: '', username: '' },
+      table: 0,
+      winner: '0',
+    },
   ])
   const [player1, setPlayer1] = useState([])
   const [player2, setPlayer2] = useState([])
   const [tables, setTables] = useState([])
   const [winners, setWinners] = useState([])
+  const [input, setInput] = useState({ value: '0' })
   const { name } = route.params
 
   useEffect(() => {
@@ -54,10 +61,6 @@ export default function Tournament({ route, navigation }) {
                 'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
                 [results.rows.item(i).Player1ID],
                 (tx, result1) => {
-                  // playerOne =
-                  //   result1.rows.item(0).Name +
-                  //   ' ' +
-                  //   result1.rows.item(0).Username
                   let id = result1.rows.item(0).ID
                   let name = result1.rows.item(0).Name
                   let username = result1.rows.item(0).Username
@@ -70,10 +73,6 @@ export default function Tournament({ route, navigation }) {
                   'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
                   [results.rows.item(i).Player2ID],
                   (tx, result2) => {
-                    // playerTwo =
-                    //   result2.rows.item(0).Name +
-                    //   ' ' +
-                    //   result2.rows.item(0).Username
                     let id = result2.rows.item(0).ID
                     let name = result2.rows.item(0).Name
                     let username = result2.rows.item(0).Username
@@ -88,13 +87,13 @@ export default function Tournament({ route, navigation }) {
                 playerTwo = { id, name, username }
                 player2.push(playerTwo)
               }
-              if(results.rows.item(i).Stol === null){
+              if (results.rows.item(i).Stol === null) {
                 tables.push('')
               } else {
                 tables.push(results.rows.item(i).Stol)
               }
 
-              if(results.rows.item(i).Stol === null){
+              if (results.rows.item(i).Stol === null) {
                 winners.push('')
               } else {
                 winners.push(results.rows.item(i).WinnerID.toString())
@@ -120,9 +119,9 @@ export default function Tournament({ route, navigation }) {
       //console.log(c)
       match.push(c)
     }
-    for (let i = 0; i < match.length; i++) {
-      console.log(match[i])
-    }
+    // for (let i = 0; i < match.length; i++) {
+    //   console.log(match[i])
+    // }
   }
 
   const setWinner = (winner, player1ID, player2ID) => {
@@ -162,8 +161,17 @@ export default function Tournament({ route, navigation }) {
             )}
           >
             <View style={tw.style('flex-1')}>
-              <Text style={styles.text}>Hráč 1: {(item.playerOne.name + ' ' + item.playerOne.username).toString()}</Text>
-              <Text style={styles.text}>Hráč 2: {item.playerTwo.name + ' ' + item.playerTwo.username}</Text>
+              <Text style={styles.text}>
+                Hráč 1:{' '}
+                {(
+                  item.playerOne.name +
+                  ' ' +
+                  item.playerOne.username
+                ).toString()}
+              </Text>
+              <Text style={styles.text}>
+                Hráč 2: {item.playerTwo.name + ' ' + item.playerTwo.username}
+              </Text>
             </View>
             <View style={tw.style('flex-1')}>
               <Text style={styles.text}>Stôl: {item.table}</Text>
@@ -172,24 +180,20 @@ export default function Tournament({ route, navigation }) {
               <Text style={(styles.text, tw.style('hidden'))}>
                 Víťaz: {item.winner}
               </Text>
-              <Text style={styles.text}>Zadaj víťaza:</Text>
-              <View style={tw.style('bg-yellow-500', 'h-10')}>
-                <TextInput
-                  style={tw.style('w-full', 'text-3xl')}
-                  label="Víťaz"
-                  returnKeyType="next"
-                  value={item.winner}
-                  onChangeText={(text) => {
-                    item.winner = text
-                    if (
-                      item.winner === (item.playerOne.name + ' ' + item.playerOne.username) ||
-                      item.winner === (item.playerTwo.name + ' ' + item.playerTwo.username)
-                    ) {
-                      console.log('Postupujes')
-                    }
-                  }}
-                  placeholder="Meno víťaza"
-                />
+              <Text style={styles.text}>Zvoľ víťaza:</Text>
+              <View style={tw.style('bg-yellow-500', 'h-10', 'rounded-md', 'm-1.5', 'items-center', 'justify-center')}>
+                <TouchableOpacity
+                  onPress={setWinner(item.playerOne.id, item.playerOne.id, item.playerTwo.id)}
+                >
+                  <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>Hráč 1.</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={tw.style('bg-yellow-500', 'h-10', 'rounded-md', 'm-1.5', 'items-center', 'justify-center')}>
+                <TouchableOpacity
+                  onPress={setWinner(item.playerTwo.id, item.playerOne.id, item.playerTwo.id)}
+                >
+                  <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>Hráč 2.</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
