@@ -30,7 +30,7 @@ export default function Tournaments({ navigation }) {
   }, [])
 
   const [refreshing, setRefreshing] = useState(false)
-  const [tournament, setTournament] = useState([{name: 'help'}])
+  const [tournament, setTournament] = useState([])
 
 
   const renderTournaments = async () => {
@@ -42,15 +42,11 @@ export default function Tournaments({ navigation }) {
           [],
           (tx, results) => {
             var len = results.rows.length
-            console.log(len)
             console.log('Number of tournaments: ' + len)
             if (len > 0) {
               for (let i = 0; i < len; i++) {
                 var name = results.rows.item(i).Name
-                let prototype = {name}
-                console.log(name)
-                tournament.push(prototype)
-                console.log(tournament.length + '\n')
+                setTournament(prevState => [...prevState, {name}])
               }
             }
           }
