@@ -15,7 +15,6 @@ import { setName, setRank } from '../redux/actions'
 import playerReducer from '../redux/reducers'
 import CustomButton from '../utils/customButton'
 import { LogBox } from 'react-native'
-import { set } from 'react-native-reanimated'
 
 const db = SQLite.openDatabase(
   {
@@ -222,14 +221,27 @@ export default function Create({ navigation }) {
           generateTournamentMatches()
 
         for (var i = 0; i < match.length; i++) {
-          tx.executeSql(
-            'INSERT INTO Matches (TournamentName, Player1ID, Player2ID) VALUES (?, ?, ?)',
-            [
-              name.value,
-              match[i].playerOne,
-              match[i].playerTwo,
-            ]
-          )
+          if(match[i].playerTwo == 0){
+            tx.executeSql(
+              'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, WinnerID) VALUES (?, ?, ?, ?)',
+              [
+                name.value,
+                match[i].playerOne,
+                match[i].playerTwo,
+                match[i].playerOne,
+              ]
+            )
+          } else {
+            tx.executeSql(
+              'INSERT INTO Matches (TournamentName, Player1ID, Player2ID) VALUES (?, ?, ?)',
+              [
+                name.value,
+                match[i].playerOne,
+                match[i].playerTwo,
+              ]
+            )
+          }
+          
         }
         // console.log('success')
 
