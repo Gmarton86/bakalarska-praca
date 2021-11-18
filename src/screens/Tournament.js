@@ -45,22 +45,25 @@ export default function Tournament({ route, navigation }) {
     passTournamentData()
   }, [])
 
-  const wait = () => {
+  function wait(){
     //match.pop()
+    console.log(winners)
     let newMatch = []
     for (let i = 0; i < player1.length; i++) {
       var playerOne = player1[i]
       var playerTwo = player2[i]
       var table = tables[i]
-      var winner = winners[i]
-      var c= { playerOne, playerTwo, table, winner }
-      console.log(playerTwo)      
+      var winner = winners.find((pos) => pos.pos === i).winner
+      console.log(winner)
+      var c = { playerOne, playerTwo, table, winner }
+      //console.log(playerTwo)
       // if(playerTwo.id != 0){
       //   c = { playerOne, playerTwo, table, winner }
       // } else {
       //   winner = playerOne.name + ' ' + playerOne.username;
       //   c = { playerOne, playerTwo, table, winner }
       // }
+      //console.log(c)
       newMatch = [...newMatch, c]
       setMatch((prevState) => [
         ...prevState,
@@ -69,7 +72,7 @@ export default function Tournament({ route, navigation }) {
       //match.push(c)
     }
     dispatch(setMatches(newMatch))
-    //console.log(match)
+    //console.log(matches)
     let a = match.filter((m) => m.table !== '')
     freeTables.value = freeTables.value - a.length
     return 0
@@ -80,7 +83,7 @@ export default function Tournament({ route, navigation }) {
     var playerTwo
     try {
       await db
-        .transaction( async (tx) => {
+        .transaction((tx) => {
           tx.executeSql(
             'Select Tables FROM Tournaments WHERE Name = ?',
             [name],
@@ -91,9 +94,10 @@ export default function Tournament({ route, navigation }) {
            tx.executeSql(
             'SELECT Player1ID, Player2ID, Stol, WinnerID FROM Matches WHERE Matches.TournamentName=?',
             [name],
-            (err, results) => {
+            async (err, results) => {
               var len = results.rows.length
               for (let i = 0; i < len; i++) {
+                //console.log('ix')
                  tx.executeSql(
                   'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
                   [results.rows.item(i).Player1ID],
@@ -107,7 +111,7 @@ export default function Tournament({ route, navigation }) {
                 )
 
                 if (results.rows.item(i).Player2ID != 0) {
-                  tx.executeSql(
+                 tx.executeSql(
                     'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
                     [results.rows.item(i).Player2ID],
                     (tx, result2) => {
@@ -131,60 +135,129 @@ export default function Tournament({ route, navigation }) {
                   tables.push(results.rows.item(i).Stol)
                 }
 
-                if (results.rows.item(i).WinnerID !== 0) {
+                //console.log(results.rows.item(i).WinnerID)
+                if (results.rows.item(i).WinnerID != null && results.rows.item(i).WinnerID != 0) {
                   tx.executeSql(
-                    'SELECT Name, Username FROM Players WHERE Players.ID=?',
+                    'SELECT ID, Name, Username FROM Players WHERE Players.ID=?',
                     [results.rows.item(i).WinnerID],
+                    
                     (tx, result3) => {
+                      if(result3.rows.length === 0 ){
+                        console.log(results.rows.item(i).WinnerID)
+                      }
+                      let id = result3.rows.item(0).ID
                       let name = result3.rows.item(0).Name
                       let username = result3.rows.item(0).Username
-                      let winner = name + ' ' + username
-                      console.log(winner)
-                      winners.push(winner)
+                      let winner = { id, name, username }
+                      let syncWinner = {pos: i, winner: winner}
+                      console.log(syncWinner)
+                      winners.push(syncWinner)
                     }
                   )
+                  console.log('i')
                 } else {
-                  winners.push('')
+                  let id = 0
+                  let name = ''
+                  let username = ''
+                  let winner = { id, name, username }
+                  let syncWinner = {pos: i, winner: winner}
+                  console.log(syncWinner)
+                  winners.push(syncWinner)
                 }
+                //console.log('i')
               }
             }
           )
         })
-        .then(() => {
-          wait()
-        })
+        // wait();
       //console.log('no takr')
     } catch (error) {
       console.log(error)
+    } finally {
+      wait()
     }
   }
 
+  function findRounds() {
+    var i = 2
+    var counter = 1
+    console.log('match len ' + matches.length)
+    while (i ** counter <= matches.length) {
+      counter++
+    }
+    return counter
+  }
+
+  function findCurrentRound() {
+    var allRounds = findRounds()
+    var allMatches = 2 ** allRounds
+    var matchesLeft = allMatches - matches.length
+    var counter = allRounds
+    while (matchesLeft <= 2 ** counter) {
+      counter--
+    }
+    console.log('current: ' + counter)
+    return allRounds - counter
+  }
+
+  const nextRoundGenerator = () => {
+    var round = findRounds() - findCurrentRound()
+
+    let a = 2 ** round
+    var arr = matches
+    for (let i = a; i > 0; i--) {
+      let posOne = matches.length - i * 2
+      let posTwo = matches.length - i * 2 + 1
+      console.log('pos ' + posOne + ' ' + posTwo)
+      console.log(matches[posOne].winner + ' ' + matches[posTwo].winner)
+      let c = {
+        playerOne: matches[posOne].winner,
+        playerTwo: matches[posTwo].winner,
+        table: '',
+        winner: { id: 0, name: '', username: '' },
+      }
+
+      arr = [...arr, c]
+      //console.log(c)
+      //console.log(matches)
+      //dispatch(setMatches(...matches, c))
+    }
+    dispatch(setMatches(arr))
+  }
+
   const setWinner = (winnerID, player1ID, player2ID) => {
-    console.log(winnerID)
+    //console.log(winnerID)
     try {
       db.transaction((tx) => {
         tx.executeSql(
-          'SELECT Name, Username FROM Players WHERE ID = ?',
+          'SELECT ID, Name, Username FROM Players WHERE ID = ?',
           [parseInt(winnerID)],
           (err, result) => {
             var len = result.rows.length
             if (len == 0) {
               alert('winner doesnt exist')
             } else {
-              let winner =
-                result.rows.item(0).Name + ' ' + result.rows.item(0).Username
+              let id = result.rows.item(0).ID
+              let name = result.rows.item(0).Name
+              let username = result.rows.item(0).Username
+              let winner = { id, name, username }
               console.log(winner)
-              matches.find(
+              matches.reverse().find(
                 (match) =>
                   match.playerOne.id === parseInt(winnerID) ||
                   match.playerTwo.id === parseInt(winnerID)
               ).winner = winner
-              dispatch(setMatches(matches))
-              console.log(matches)
+              dispatch(setMatches(matches.reverse()))
+              //console.log(matches)
               tx.executeSql(
                 'UPDATE Matches SET WinnerID = ? WHERE Player1ID = ? AND Player2ID = ?',
                 [parseInt(winnerID), parseInt(player1ID), parseInt(player2ID)]
               )
+              if (
+                matches.find((match) => match.winner.id === 0) === undefined
+              ) {
+                nextRoundGenerator()
+              }
             }
           }
         )
@@ -236,7 +309,9 @@ export default function Tournament({ route, navigation }) {
             <View style={tw.style('flex-1')}>
               {isWinner ? (
                 <View>
-                  <Text style={styles.text}>Víťaz: {item.winner}</Text>
+                  <Text style={styles.text}>
+                    Víťaz: {item.winner.name + ' ' + item.winner.username}
+                  </Text>
                 </View>
               ) : (
                 <></>
