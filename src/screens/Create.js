@@ -198,8 +198,8 @@ export default function Create({ navigation }) {
 
   const createTournament = () => {
     var tables = parseInt(NumberOfTables.value)
-    console.log(tables)
-    console.log(name.value)
+    //console.log(tables)
+    //console.log(name.value)
     try {
       db.transaction((tx) => {
         // tx.executeSql('SELECT * FROM Users ', [], (tx, results) => {

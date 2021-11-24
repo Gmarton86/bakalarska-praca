@@ -54,7 +54,7 @@ export default function Tournament({ route, navigation }) {
       var playerTwo = player2[i]
       var table = tables[i]
       var winner = winners.find((pos) => pos.pos === i).winner
-      console.log(winner)
+      //console.log(winner)
       var c = { playerOne, playerTwo, table, winner }
       //console.log(playerTwo)
       // if(playerTwo.id != 0){
@@ -156,7 +156,7 @@ export default function Tournament({ route, navigation }) {
                     winners.push(syncWinner)
                   }
                 )
-                console.log('i')
+                //console.log('i')
               } else {
                 let id = 0
                 let name = ''
@@ -218,6 +218,12 @@ export default function Tournament({ route, navigation }) {
         table: '',
         winner: { id: 0, name: '', username: '' },
       }
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, WinnerID) VALUES (?, ?, ?, ?)',
+          [name, matches[posOne].winner.id, matches[posTwo].winner.id, 0]
+        )
+      })
 
       arr = [...arr, c]
       //console.log(c)
@@ -275,10 +281,57 @@ export default function Tournament({ route, navigation }) {
     navigation.replace('Home')
   }
 
+  function deleteTournament() {
+    try {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'DELETE FROM Tournaments WHERE Name=?',
+          [name],
+          function (tx, results) {
+            console.error('Successfully Emptied')
+          },
+          function (tx, error) {
+            console.error('Error: ' + error.message)
+          }
+        )
+        tx.executeSql(
+          'DELETE FROM Matches WHERE TournamentName=?',
+          [name],
+          function (tx, results) {
+            console.error('Successfully Emptied')
+          },
+          function (tx, error) {
+            console.error('Error: ' + error.message)
+          }
+        )
+      })
+    } catch (error) {
+      console.log(error)
+    }
+    navigation.replace('Home')
+  }
+
   return (
     <View style={styles.body}>
       <View>
         <BackButton goBack={visitHome} />
+      </View>
+      <View>
+        <TouchableOpacity
+          style={tw.style(
+            'bg-yellow-500',
+            'h-10',
+            'rounded-md',
+            'm-1.5',
+            'items-center',
+            'justify-center'
+          )}
+          onPress={() => deleteTournament()}
+        >
+          <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>
+            Zrušenie turnaju
+          </Text>
+        </TouchableOpacity>
       </View>
       <Text style={styles.text}>Rozpis zapasov</Text>
       <FlatList
