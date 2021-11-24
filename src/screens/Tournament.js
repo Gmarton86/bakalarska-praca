@@ -45,9 +45,9 @@ export default function Tournament({ route, navigation }) {
     passTournamentData()
   }, [])
 
-  function wait(){
+  function wait() {
     //match.pop()
-    console.log(winners)
+    //console.log(winners)
     let newMatch = []
     for (let i = 0; i < player1.length; i++) {
       var playerOne = player1[i]
@@ -82,94 +82,96 @@ export default function Tournament({ route, navigation }) {
     var playerOne
     var playerTwo
     try {
-      await db
-        .transaction((tx) => {
-          tx.executeSql(
-            'Select Tables FROM Tournaments WHERE Name = ?',
-            [name],
-            (tx, results) => {
-              freeTables.value = results.rows.item(0).Tables
-            }
-          )
-           tx.executeSql(
-            'SELECT Player1ID, Player2ID, Stol, WinnerID FROM Matches WHERE Matches.TournamentName=?',
-            [name],
-            async (err, results) => {
-              var len = results.rows.length
-              for (let i = 0; i < len; i++) {
-                //console.log('ix')
-                 tx.executeSql(
+      await db.transaction((tx) => {
+        tx.executeSql(
+          'Select Tables FROM Tournaments WHERE Name = ?',
+          [name],
+          (tx, results) => {
+            freeTables.value = results.rows.item(0).Tables
+          }
+        )
+        tx.executeSql(
+          'SELECT Player1ID, Player2ID, Stol, WinnerID FROM Matches WHERE Matches.TournamentName=?',
+          [name],
+          async (err, results) => {
+            var len = results.rows.length
+            for (let i = 0; i < len; i++) {
+              //console.log('ix')
+              tx.executeSql(
+                'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
+                [results.rows.item(i).Player1ID],
+                (tx, result1) => {
+                  let id = result1.rows.item(0).ID
+                  let name = result1.rows.item(0).Name
+                  let username = result1.rows.item(0).Username
+                  playerOne = { id, name, username }
+                  player1.push(playerOne)
+                }
+              )
+
+              if (results.rows.item(i).Player2ID != 0) {
+                tx.executeSql(
                   'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
-                  [results.rows.item(i).Player1ID],
-                  (tx, result1) => {
-                    let id = result1.rows.item(0).ID
-                    let name = result1.rows.item(0).Name
-                    let username = result1.rows.item(0).Username
-                    playerOne = { id, name, username }
-                    player1.push(playerOne)
+                  [results.rows.item(i).Player2ID],
+                  (tx, result2) => {
+                    let id = result2.rows.item(0).ID
+                    let name = result2.rows.item(0).Name
+                    let username = result2.rows.item(0).Username
+                    playerTwo = { id, name, username }
+                    player2.push(playerTwo)
                   }
                 )
-
-                if (results.rows.item(i).Player2ID != 0) {
-                 tx.executeSql(
-                    'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
-                    [results.rows.item(i).Player2ID],
-                    (tx, result2) => {
-                      let id = result2.rows.item(0).ID
-                      let name = result2.rows.item(0).Name
-                      let username = result2.rows.item(0).Username
-                      playerTwo = { id, name, username }
-                      player2.push(playerTwo)
-                    }
-                  )
-                } else {
-                  let id = 0
-                  let name = ''
-                  let username = ''
-                  playerTwo = { id, name, username }
-                  player2.push(playerTwo)
-                }
-                if (results.rows.item(i).Stol === null) {
-                  tables.push('')
-                } else {
-                  tables.push(results.rows.item(i).Stol)
-                }
-
-                //console.log(results.rows.item(i).WinnerID)
-                if (results.rows.item(i).WinnerID != null && results.rows.item(i).WinnerID != 0) {
-                  tx.executeSql(
-                    'SELECT ID, Name, Username FROM Players WHERE Players.ID=?',
-                    [results.rows.item(i).WinnerID],
-                    
-                    (tx, result3) => {
-                      if(result3.rows.length === 0 ){
-                        console.log(results.rows.item(i).WinnerID)
-                      }
-                      let id = result3.rows.item(0).ID
-                      let name = result3.rows.item(0).Name
-                      let username = result3.rows.item(0).Username
-                      let winner = { id, name, username }
-                      let syncWinner = {pos: i, winner: winner}
-                      console.log(syncWinner)
-                      winners.push(syncWinner)
-                    }
-                  )
-                  console.log('i')
-                } else {
-                  let id = 0
-                  let name = ''
-                  let username = ''
-                  let winner = { id, name, username }
-                  let syncWinner = {pos: i, winner: winner}
-                  console.log(syncWinner)
-                  winners.push(syncWinner)
-                }
-                //console.log('i')
+              } else {
+                let id = 0
+                let name = ''
+                let username = ''
+                playerTwo = { id, name, username }
+                player2.push(playerTwo)
               }
+              if (results.rows.item(i).Stol === null) {
+                tables.push('')
+              } else {
+                tables.push(results.rows.item(i).Stol)
+              }
+
+              //console.log(results.rows.item(i).WinnerID)
+              if (
+                results.rows.item(i).WinnerID != null &&
+                results.rows.item(i).WinnerID != 0
+              ) {
+                tx.executeSql(
+                  'SELECT ID, Name, Username FROM Players WHERE Players.ID=?',
+                  [results.rows.item(i).WinnerID],
+
+                  (tx, result3) => {
+                    if (result3.rows.length === 0) {
+                      console.log(results.rows.item(i).WinnerID)
+                    }
+                    let id = result3.rows.item(0).ID
+                    let name = result3.rows.item(0).Name
+                    let username = result3.rows.item(0).Username
+                    let winner = { id, name, username }
+                    let syncWinner = { pos: i, winner: winner }
+                    //console.log(syncWinner)
+                    winners.push(syncWinner)
+                  }
+                )
+                console.log('i')
+              } else {
+                let id = 0
+                let name = ''
+                let username = ''
+                let winner = { id, name, username }
+                let syncWinner = { pos: i, winner: winner }
+                //console.log(syncWinner)
+                winners.push(syncWinner)
+              }
+              //console.log('i')
             }
-          )
-        })
-        // wait();
+          }
+        )
+      })
+      // wait();
       //console.log('no takr')
     } catch (error) {
       console.log(error)
@@ -181,7 +183,7 @@ export default function Tournament({ route, navigation }) {
   function findRounds() {
     var i = 2
     var counter = 1
-    console.log('match len ' + matches.length)
+    //console.log('match len ' + matches.length)
     while (i ** counter <= matches.length) {
       counter++
     }
@@ -196,7 +198,7 @@ export default function Tournament({ route, navigation }) {
     while (matchesLeft <= 2 ** counter) {
       counter--
     }
-    console.log('current: ' + counter)
+    //console.log('current: ' + counter)
     return allRounds - counter
   }
 
@@ -208,8 +210,8 @@ export default function Tournament({ route, navigation }) {
     for (let i = a; i > 0; i--) {
       let posOne = matches.length - i * 2
       let posTwo = matches.length - i * 2 + 1
-      console.log('pos ' + posOne + ' ' + posTwo)
-      console.log(matches[posOne].winner + ' ' + matches[posTwo].winner)
+      //console.log('pos ' + posOne + ' ' + posTwo)
+      //console.log(matches[posOne].winner + ' ' + matches[posTwo].winner)
       let c = {
         playerOne: matches[posOne].winner,
         playerTwo: matches[posTwo].winner,
@@ -241,12 +243,14 @@ export default function Tournament({ route, navigation }) {
               let name = result.rows.item(0).Name
               let username = result.rows.item(0).Username
               let winner = { id, name, username }
-              console.log(winner)
-              matches.reverse().find(
-                (match) =>
-                  match.playerOne.id === parseInt(winnerID) ||
-                  match.playerTwo.id === parseInt(winnerID)
-              ).winner = winner
+              //console.log(winner)
+              matches
+                .reverse()
+                .find(
+                  (match) =>
+                    match.playerOne.id === parseInt(winnerID) ||
+                    match.playerTwo.id === parseInt(winnerID)
+                ).winner = winner
               dispatch(setMatches(matches.reverse()))
               //console.log(matches)
               tx.executeSql(
