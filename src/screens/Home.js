@@ -10,6 +10,7 @@ import {
 import TextButton from '../utils/textButton'
 import SQLite from 'react-native-sqlite-storage'
 import CustomButton from '../utils/customButton'
+import tw from 'tailwind-react-native-classnames'
 
 const db = SQLite.openDatabase(
   {
@@ -71,8 +72,9 @@ export default function Tournaments({ navigation }) {
       <View style={styles.login}>
         <TextButton title="Prihlásenie" onPressFunction={visitLogin} />
       </View>
-
-      <Text style={styles.text}>Prebiehajúce turnaje</Text>
+      <View style={tw.style('ml-3')}> 
+        <Text style={styles.text}>Prebiehajúce turnaje</Text>
+      </View>
       <FlatList
         keyExtractor={(item, index) => index.toString()}
         data={tournament}
@@ -81,10 +83,11 @@ export default function Tournaments({ navigation }) {
             <CustomButton
               title={item.name}
               color="#1eb900"
-              style={{ width: '80%', marginTop: 24}}
+              style={{ width: '80%', marginTop: 24 }}
               onPressFunction={() => {
                 /* 1. Navigate to the Details route with params */
-                navigation.navigate('Tournament', item);}}
+                navigation.navigate('Tournament', item)
+              }}
             />
           </View>
         )}
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   item: {
-    margin: 5,
+    margin: 3,
     backgroundColor: '#4ae',
     justifyContent: 'center',
     alignItems: 'center',

@@ -378,7 +378,7 @@ export default function Tournament({ route, navigation }) {
               ) : (
                 <></>
               )}
-              {winnerVisibility ? (
+              {(winnerVisibility && (item.playerTwo.username !== '')) ? (
                 <View>
                   <Text style={styles.text}>Zvoľ víťaza:</Text>
                   <View>
