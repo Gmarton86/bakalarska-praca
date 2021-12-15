@@ -83,7 +83,7 @@ export default function Tournaments({ navigation }) {
             <CustomButton
               title={item.name}
               color="#1eb900"
-              style={{ width: '80%', marginTop: 24 }}
+              style={{ width: '80%', marginTop: 10 }}
               onPressFunction={() => {
                 /* 1. Navigate to the Details route with params */
                 navigation.navigate('Tournament', item)
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   item: {
-    margin: 3,
+    margin: 5,
     backgroundColor: '#4ae',
     justifyContent: 'center',
     alignItems: 'center',

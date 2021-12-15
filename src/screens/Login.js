@@ -13,6 +13,7 @@ import BackButton from '../utils/backButton'
 import SQLite from 'react-native-sqlite-storage'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserType } from '../redux/actions'
+import tw from 'tailwind-react-native-classnames'
 
 
 const db = SQLite.openDatabase(
@@ -120,7 +121,9 @@ export default function Login({ navigation }) {
 
   return (
     <View style={styles.background}>
-      <BackButton goBack={visitHome} />
+      <View style={tw.style('flex', 'bg-white', 'pb-1')}>
+        <BackButton goBack={visitHome} />
+      </View>
       <View style={styles.body}>
         <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
         <TextInput
