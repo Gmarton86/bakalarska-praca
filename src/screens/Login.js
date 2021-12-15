@@ -9,9 +9,10 @@ import {
 } from 'react-native'
 import CustomButton from '../utils/customButton'
 import BackButton from '../utils/backButton'
-import { emailValidator } from '../helpers/emailValidator'
-import { passwordValidator } from '../helpers/passwordValidator'
+
 import SQLite from 'react-native-sqlite-storage'
+import { useDispatch, useSelector } from 'react-redux'
+import { setUserType } from '../redux/actions'
 
 
 const db = SQLite.openDatabase(
@@ -28,6 +29,9 @@ const db = SQLite.openDatabase(
 export default function Login({ navigation }) {
   const [email, setEmail] = useState({ value: '', error: '' })
   const [password, setPassword] = useState({ value: '', error: '' })
+
+  const { userType } = useSelector((state) => state.playerReducer)
+  const dispatch = useDispatch()
 
   // useEffect(() => {
   //   getData();
@@ -56,25 +60,53 @@ export default function Login({ navigation }) {
   //   }
   // }
 
+  const validateUser = (userType) => {
+    if (userType === 'trainer') {
+      dispatch(setUserType('trainer'))
+    } else {
+      dispatch(setUserType('admin'))
+    }
+  }
+
+  //admin passwd: bffCyFd
   const onLoginPressed = () => {
     try {
       db.transaction((tx) => {
-        tx.executeSql(
-          'SELECT Username, Password FROM Users WHERE Username = ? and Password = ?',
-          [email.value, password.value],
-          (tx, results) => {
-            var len = results.rows.length
-            //console.log(len)
-            if (len > 0) {
-              navigation.replace('Create')
-            } else {
-              Alert.alert(
-                'Nesprávne meno alebo heslo!',
-                'Vytvorte konto alebo resetujte heslo.'
-              )
+        if (email.value !== 'trainer') {
+          tx.executeSql(
+            'SELECT Username, Password, TrainerPasswd, TrainerUsr FROM Users WHERE Username = ? and Password = ?',
+            [email.value, password.value],
+            (tx, results) => {
+              var len = results.rows.length
+              if (len > 0) {
+                console.log(results.rows.item(0))
+                validateUser(email.value)
+                navigation.replace('Create')
+              } else {
+                Alert.alert(
+                  'Nesprávne meno alebo heslo!',
+                  'Vytvorte konto alebo resetujte heslo.'
+                )
+              }
             }
-          }
-        )
+          )
+        } else {
+          tx.executeSql(
+            'SELECT Username, Password FROM Users WHERE TrainerUsr = ? and TrainerPasswd = ?',
+            [email.value, password.value],
+            (tx, results) => {
+              var len = results.rows.length
+              if (len > 0) {
+                validateUser(email.value)
+              } else {
+                Alert.alert(
+                  'Nesprávne meno alebo heslo!',
+                  'Vytvorte konto alebo resetujte heslo.'
+                )
+              }
+            }
+          )
+        }
       })
     } catch (error) {
       console.log(error)
@@ -88,50 +120,50 @@ export default function Login({ navigation }) {
   return (
     <View style={styles.background}>
       <BackButton goBack={visitHome} />
-    <View style={styles.body}>
-      <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
-      <TextInput
-        style={styles.input}
-        label="Email"
-        returnKeyType="next"
-        value={email.value}
-        onChangeText={(text) => setEmail({ value: text, error: '' })}
-        error={!!email.error}
-        errorText={email.error}
-        autoCapitalize="none"
-        autoCompleteType="email"
-        textContentType="emailAddress"
-        keyboardType="email-address"
-      />
-      <Text style={styles.text}>Zadaj svoje heslo: </Text>
-      <TextInput
-        style={styles.input}
-        label="Password"
-        returnKeyType="done"
-        value={password.value}
-        onChangeText={(text) => setPassword({ value: text, error: '' })}
-        error={!!password.error}
-        errorText={password.error}
-        secureTextEntry
-      />
-      <View style={styles.forgotPassword}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ResetPasswordScreen')}
-        >
-          <Text style={styles.forgot}>Zabudol si heslo?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.forgot}>Zaregistruj sa</Text>
-        </TouchableOpacity>
-      </View>
+      <View style={styles.body}>
+        <Text style={styles.text}>Zadaj svoje uživateľské meno:</Text>
+        <TextInput
+          style={styles.input}
+          label="Email"
+          returnKeyType="next"
+          value={email.value}
+          onChangeText={(text) => setEmail({ value: text, error: '' })}
+          error={!!email.error}
+          errorText={email.error}
+          autoCapitalize="none"
+          autoCompleteType="email"
+          textContentType="emailAddress"
+          keyboardType="email-address"
+        />
+        <Text style={styles.text}>Zadaj svoje heslo: </Text>
+        <TextInput
+          style={styles.input}
+          label="Password"
+          returnKeyType="done"
+          value={password.value}
+          onChangeText={(text) => setPassword({ value: text, error: '' })}
+          error={!!password.error}
+          errorText={password.error}
+          secureTextEntry
+        />
+        <View style={styles.forgotPassword}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ResetPasswordScreen')}
+          >
+            <Text style={styles.forgot}>Zabudol si heslo?</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.forgot}>Zaregistruj sa</Text>
+          </TouchableOpacity>
+        </View>
 
-      <CustomButton
-        title="Potvrdiť"
-        color="#1eb900"
-        style={{ width: '30%' }}
-        onPressFunction={onLoginPressed}
-      />
-    </View>
+        <CustomButton
+          title="Potvrdiť"
+          color="#1eb900"
+          style={{ width: '30%' }}
+          onPressFunction={onLoginPressed}
+        />
+      </View>
     </View>
   )
 }

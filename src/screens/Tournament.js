@@ -12,7 +12,7 @@ import BackButton from '../utils/backButton'
 import SQLite from 'react-native-sqlite-storage'
 import tw from 'tailwind-react-native-classnames'
 import { useDispatch, useSelector } from 'react-redux'
-import { setMatches } from '../redux/actions'
+import { setMatches, setUserType } from '../redux/actions'
 
 const db = SQLite.openDatabase(
   {
@@ -37,12 +37,17 @@ export default function Tournament({ route, navigation }) {
   const [freeTables, setFreeTables] = useState({ value: 0 })
   const { name } = route.params
 
-  const { matches } = useSelector((state) => state.playerReducer)
+  const { matches, userType } = useSelector((state) => state.playerReducer)
   const dispatch = useDispatch()
 
   useEffect(() => {
     SQLite.enablePromise(true)
     passTournamentData()
+    if(userType !== 'player') {
+      setWinnerVisibility(true)
+    } else {
+      setWinnerVisibility(false)
+    }
   }, [])
 
   function wait() {
