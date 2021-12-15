@@ -98,6 +98,7 @@ export default function Login({ navigation }) {
               var len = results.rows.length
               if (len > 0) {
                 validateUser(email.value)
+                navigation.replace('Home')
               } else {
                 Alert.alert(
                   'Nesprávne meno alebo heslo!',
