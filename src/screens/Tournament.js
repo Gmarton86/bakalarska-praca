@@ -34,7 +34,8 @@ export default function Tournament({ route, navigation }) {
   const [winners, setWinners] = useState([])
   const [winnerVisibility, setWinnerVisibility] = useState(true)
   const [isWinner, setIsWinner] = useState(true)
-  const [freeTables, setFreeTables] = useState({ value: 0 })
+  const [freeTables, setFreeTables] = useState([])
+  const [numberOfTables, setNumberOfTables] = useState({ value: 0 })
   const { name } = route.params
 
   const { matches, userType } = useSelector((state) => state.playerReducer)
@@ -43,7 +44,7 @@ export default function Tournament({ route, navigation }) {
   useEffect(() => {
     SQLite.enablePromise(true)
     passTournamentData()
-    if(userType !== 'player') {
+    if (userType !== 'player') {
       setWinnerVisibility(true)
     } else {
       setWinnerVisibility(false)
@@ -78,8 +79,13 @@ export default function Tournament({ route, navigation }) {
     }
     dispatch(setMatches(newMatch))
     //console.log(matches)
-    let a = match.filter((m) => m.table !== '')
-    freeTables.value = freeTables.value - a.length
+    let a = newMatch.filter((m) => (m.winner.id === 0 && m.table !== ''))
+    for (i = 1; i <= numberOfTables.value; i++) {
+      if (a.find((match) => match.table === i) === undefined) {
+        freeTables.push(i)
+      }
+    }
+    console.log(freeTables)
     return 0
   }
 
@@ -92,7 +98,7 @@ export default function Tournament({ route, navigation }) {
           'Select Tables FROM Tournaments WHERE Name = ?',
           [name],
           (tx, results) => {
-            freeTables.value = results.rows.item(0).Tables
+            numberOfTables.value = results.rows.item(0).Tables
           }
         )
         tx.executeSql(
@@ -207,7 +213,7 @@ export default function Tournament({ route, navigation }) {
     return allRounds - counter
   }
 
-  const nextRoundGenerator = () => {
+  const nextRoundGenerator = (table) => {
     var round = findRounds() - findCurrentRound()
 
     let a = 2 ** round
@@ -235,11 +241,13 @@ export default function Tournament({ route, navigation }) {
       //console.log(matches)
       //dispatch(setMatches(...matches, c))
     }
+    setNextMatch(table, arr, -1)
     dispatch(setMatches(arr))
+    //setNextMatch()
   }
 
-  const setWinner = (winnerID, player1ID, player2ID) => {
-    //console.log(winnerID)
+  const setWinner = (winnerID, player1ID, player2ID, table) => {
+    console.log(table)
     try {
       db.transaction((tx) => {
         tx.executeSql(
@@ -271,7 +279,9 @@ export default function Tournament({ route, navigation }) {
               if (
                 matches.find((match) => match.winner.id === 0) === undefined
               ) {
-                nextRoundGenerator()
+                nextRoundGenerator(table)
+              } else {
+                setNextMatch(table, matches, winnerID)
               }
             }
           }
@@ -316,32 +326,79 @@ export default function Tournament({ route, navigation }) {
     navigation.replace('Home')
   }
 
+  const updateMatchDb = (table, playerOneID, playerTwoID) => {
+    try {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'UPDATE Matches SET Stol = ? WHERE Player1ID = ? AND Player2ID = ?',
+          [parseInt(table), parseInt(playerOneID), parseInt(playerTwoID)]
+        )
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  function setNextMatch(table, matches, winnerID) {
+    console.log(table + 'a')
+    if (table !== undefined && table !== '' && table !== ' ') {
+      console.log('push')
+
+      freeTables.push(parseInt(table))
+    }
+    console.log(freeTables)
+    matches.filter((match) => {
+      if (
+        match.winner.name === '' &&
+        match.table === '' &&
+        freeTables.length > 0 &&
+        match.playerOne.id !== parseInt(winnerID) &&
+        match.playerTwo.id !== parseInt(winnerID)
+      ) {
+        match.table = freeTables[freeTables.length - 1].toString()
+        updateMatchDb(
+          freeTables[freeTables.length - 1],
+          match.playerOne.id,
+          match.playerTwo.id
+        )
+        freeTables.pop()
+      }
+    })
+    dispatch(setMatches(matches))
+  }
+
   return (
     <View style={styles.body}>
       <View>
         <BackButton goBack={visitHome} />
       </View>
       <View>
-        <TouchableOpacity
-          style={tw.style(
-            'bg-yellow-500',
-            'h-10',
-            'rounded-md',
-            'm-1.5',
-            'items-center',
-            'justify-center'
-          )}
-          onPress={() => deleteTournament()}
-        >
-          <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>
-            Zrušenie turnaju
-          </Text>
-        </TouchableOpacity>
+        {winnerVisibility ? (
+          <TouchableOpacity
+            style={tw.style(
+              'bg-yellow-500',
+              'h-10',
+              'rounded-md',
+              'm-1.5',
+              'items-center',
+              'justify-center'
+            )}
+            onPress={() => deleteTournament()}
+          >
+            <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>
+              Zrušenie turnaju
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <></>
+        )}
       </View>
       <Text style={styles.text}>Rozpis zapasov</Text>
       <FlatList
         keyExtractor={(item, index) => index.toString()}
         data={matches}
+        inverted={true}
+        initialNumToRender={4}
         renderItem={({ item }) => (
           <View
             style={tw.style(
@@ -352,6 +409,32 @@ export default function Tournament({ route, navigation }) {
               'rounded-md'
             )}
           >
+            {item.table !== '' && item.winner.name === '' ? (
+              <View
+                style={tw.style(
+                  'w-5',
+                  'h-5',
+                  'bg-green-300',
+                  'flex-1',
+                  'mt-2',
+                  'self-center',
+                  'rounded-full'
+                )}
+              />
+            ) : (
+              <View
+                style={tw.style(
+                  'w-5',
+                  'h-5',
+                  'bg-red-600',
+                  'flex-1',
+                  'mt-2',
+                  'self-center',
+                  'rounded-full'
+                )}
+              />
+            )}
+
             <View style={tw.style('flex-1')}>
               <Text style={styles.text}>
                 Hráč 1:{' '}
@@ -365,9 +448,14 @@ export default function Tournament({ route, navigation }) {
                 Hráč 2: {item.playerTwo.name + ' ' + item.playerTwo.username}
               </Text>
             </View>
-            <View style={tw.style('flex-1')}>
-              <Text style={styles.text}>Stôl: {item.table}</Text>
-            </View>
+            {item.winner.name === '' ? (
+              <View style={tw.style('flex-1')}>
+                <Text style={styles.text}>Stôl: {item.table}</Text>
+              </View>
+            ) : (
+              <></>
+            )}
+
             <View style={tw.style('flex-1')}>
               {isWinner ? (
                 <View>
@@ -378,7 +466,7 @@ export default function Tournament({ route, navigation }) {
               ) : (
                 <></>
               )}
-              {(winnerVisibility && (item.playerTwo.username !== '')) ? (
+              {winnerVisibility && item.playerTwo.username !== '' ? (
                 <View>
                   <Text style={styles.text}>Zvoľ víťaza:</Text>
                   <View>
@@ -395,7 +483,8 @@ export default function Tournament({ route, navigation }) {
                         setWinner(
                           item.playerOne.id,
                           item.playerOne.id,
-                          item.playerTwo.id
+                          item.playerTwo.id,
+                          item.table
                         )
                       }
                     >
@@ -420,7 +509,8 @@ export default function Tournament({ route, navigation }) {
                         setWinner(
                           item.playerTwo.id,
                           item.playerOne.id,
-                          item.playerTwo.id
+                          item.playerTwo.id,
+                          item.table
                         )
                       }
                     >

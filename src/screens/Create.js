@@ -39,6 +39,7 @@ export default function Create({ navigation }) {
   const [name, setName] = useState({ value: '' })
   const [NumberOfTables, setNumberOfTables] = useState({ value: '0' })
   const [match, setMatch] = useState([])
+  var counterOfTables = 0
 
   useEffect(() => {
     LogBox.ignoreLogs(['VirtualizedLists should never be nested'])
@@ -146,11 +147,12 @@ export default function Create({ navigation }) {
         })
 
         tx.executeSql(
-          'SELECT * FROM sqlite_master WHERE type=?', ['table'],
+          'SELECT * FROM sqlite_master WHERE type=?',
+          ['table'],
           (tx, results) => {
             var len = results.rows.length
-            for(let i = 0; i < len; i++){
-              console.log("exist: " + results.rows.item(i).name)
+            for (let i = 0; i < len; i++) {
+              console.log('exist: ' + results.rows.item(i).name)
             }
           }
         )
@@ -159,28 +161,20 @@ export default function Create({ navigation }) {
         //   //insert adminID
         //   ['ok', 3, 1]
         // )
-          //  tx.executeSql(
-          //   "DELETE FROM Matches", [], () => {console.log('success')}, error => {console.log(error)}
-          // )
-          // tx.executeSql(
-          //   "DELETE FROM Tournaments", [], () => {console.log('success')}, error => {console.log(error)}
-          // )
-        tx.executeSql(
-          'SELECT Name FROM Tournaments',
-          [],
-          (tx, results) => {
-            var len = results.rows.length
-            console.log('Number of tournaments: ' + len)
-          }
-        )
-        tx.executeSql(
-          'SELECT * FROM Matches',
-          [],
-          (tx, results) => {
-            var len = results.rows.length
-            console.log('Number of Matches: '+ len)
-          }
-        )
+        //  tx.executeSql(
+        //   "DELETE FROM Matches", [], () => {console.log('success')}, error => {console.log(error)}
+        // )
+        // tx.executeSql(
+        //   "DELETE FROM Tournaments", [], () => {console.log('success')}, error => {console.log(error)}
+        // )
+        tx.executeSql('SELECT Name FROM Tournaments', [], (tx, results) => {
+          var len = results.rows.length
+          console.log('Number of tournaments: ' + len)
+        })
+        tx.executeSql('SELECT * FROM Matches', [], (tx, results) => {
+          var len = results.rows.length
+          console.log('Number of Matches: ' + len)
+        })
       })
     } catch (error) {
       console.log(error)
@@ -218,10 +212,10 @@ export default function Create({ navigation }) {
           [name.value, tables, 1]
         )
 
-          generateTournamentMatches()
+        generateTournamentMatches()
 
         for (var i = 0; i < match.length; i++) {
-          if(match[i].playerTwo == 0){
+          if (match[i].playerTwo == 0) {
             tx.executeSql(
               'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, WinnerID) VALUES (?, ?, ?, ?)',
               [
@@ -232,21 +226,25 @@ export default function Create({ navigation }) {
               ]
             )
           } else {
+            if (counterOfTables < NumberOfTables.value) {
+              counterOfTables++
+            } else {
+              counterOfTables = undefined
+            }
             tx.executeSql(
-              'INSERT INTO Matches (TournamentName, Player1ID, Player2ID) VALUES (?, ?, ?)',
+              'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, Stol) VALUES (?, ?, ?, ?)',
               [
                 name.value,
                 match[i].playerOne,
                 match[i].playerTwo,
+                counterOfTables,
               ]
             )
           }
-          
         }
         // console.log('success')
 
         visitHome()
-  
       })
     } catch (error) {
       console.log(error)
