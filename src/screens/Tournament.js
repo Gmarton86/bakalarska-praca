@@ -79,7 +79,7 @@ export default function Tournament({ route, navigation }) {
     }
     dispatch(setMatches(newMatch))
     //console.log(matches)
-    let a = newMatch.filter((m) => (m.winner.id === 0 && m.table !== ''))
+    let a = newMatch.filter((m) => m.winner.id === 0 && m.table !== '')
     for (i = 1; i <= numberOfTables.value; i++) {
       if (a.find((match) => match.table === i) === undefined) {
         freeTables.push(i)
@@ -399,7 +399,7 @@ export default function Tournament({ route, navigation }) {
         data={matches}
         inverted={true}
         initialNumToRender={4}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View
             style={tw.style(
               'flex',
@@ -420,7 +420,11 @@ export default function Tournament({ route, navigation }) {
                   'self-center',
                   'rounded-full'
                 )}
-              />
+              >
+                <Text style={tw.style('text-center', 'font-bold')}>
+                  {(index + 1).toString()}
+                </Text>
+              </View>
             ) : (
               <View
                 style={tw.style(
@@ -432,7 +436,11 @@ export default function Tournament({ route, navigation }) {
                   'self-center',
                   'rounded-full'
                 )}
-              />
+              >
+                <Text style={tw.style('text-center', 'font-bold')}>
+                  {(index + 1).toString()}
+                </Text>
+              </View>
             )}
 
             <View style={tw.style('flex-1')}>
