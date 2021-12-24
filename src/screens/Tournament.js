@@ -36,6 +36,8 @@ export default function Tournament({ route, navigation }) {
   const [isWinner, setIsWinner] = useState(true)
   const [freeTables, setFreeTables] = useState([])
   const [numberOfTables, setNumberOfTables] = useState({ value: 0 })
+  const [round, setRound] = useState(1)
+  const [rounds, setRounds] = useState(4)
   const { name } = route.params
 
   const { matches, userType } = useSelector((state) => state.playerReducer)
@@ -77,6 +79,9 @@ export default function Tournament({ route, navigation }) {
       ])
       //match.push(c)
     }
+    setRounds(find(player1))
+    setRound(findCurrentRound(newMatch) - 1)
+
     dispatch(setMatches(newMatch))
     //console.log(matches)
     let a = newMatch.filter((m) => m.winner.id === 0 && m.table !== '')
@@ -88,6 +93,21 @@ export default function Tournament({ route, navigation }) {
     console.log(freeTables)
     return 0
   }
+
+    const find = (competitor) => {
+      if (competitor.length < 8) {
+        return 3
+      }
+      if (competitor.length < 16) {
+        return 4
+      } else if (competitor.length < 32) {
+        return 5
+      } else if (competitor.length < 64) {
+        return 6
+      } else {
+        return 7
+      }
+    }
 
   const passTournamentData = async () => {
     var playerOne
@@ -191,7 +211,7 @@ export default function Tournament({ route, navigation }) {
     }
   }
 
-  function findRounds() {
+  function findRounds(matches) {
     var i = 2
     var counter = 1
     //console.log('match len ' + matches.length)
@@ -201,21 +221,25 @@ export default function Tournament({ route, navigation }) {
     return counter
   }
 
-  function findCurrentRound() {
-    var allRounds = findRounds()
+  function findCurrentRound(matches) {
+    var allRounds = findRounds(matches)
     var allMatches = 2 ** allRounds
     var matchesLeft = allMatches - matches.length
     var counter = allRounds
     while (matchesLeft <= 2 ** counter) {
       counter--
     }
-    //console.log('current: ' + counter)
     return allRounds - counter
   }
 
   const nextRoundGenerator = (table) => {
-    var round = findRounds() - findCurrentRound()
-
+    var round = findRounds(matches) - findCurrentRound(matches)
+    console.log("round " + round)
+    if(round === -1){
+      setRound(findCurrentRound(matches) - 1)
+    } else {
+      setRound(findCurrentRound(matches))
+    }
     let a = 2 ** round
     var arr = matches
     for (let i = a; i > 0; i--) {
@@ -393,7 +417,7 @@ export default function Tournament({ route, navigation }) {
           <></>
         )}
       </View>
-      <Text style={styles.text}>Rozpis zapasov</Text>
+      <Text style={styles.text}>Kolo zápasov: {round}/{rounds}</Text>
       <FlatList
         keyExtractor={(item, index) => index.toString()}
         data={matches}
