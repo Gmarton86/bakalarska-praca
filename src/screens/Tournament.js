@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from 'react-native'
 import BackButton from '../utils/backButton'
 import SQLite from 'react-native-sqlite-storage'
@@ -94,20 +95,20 @@ export default function Tournament({ route, navigation }) {
     return 0
   }
 
-    const find = (competitor) => {
-      if (competitor.length < 8) {
-        return 3
-      }
-      if (competitor.length < 16) {
-        return 4
-      } else if (competitor.length < 32) {
-        return 5
-      } else if (competitor.length < 64) {
-        return 6
-      } else {
-        return 7
-      }
+  const find = (competitor) => {
+    if (competitor.length < 8) {
+      return 3
     }
+    if (competitor.length < 16) {
+      return 4
+    } else if (competitor.length < 32) {
+      return 5
+    } else if (competitor.length < 64) {
+      return 6
+    } else {
+      return 7
+    }
+  }
 
   const passTournamentData = async () => {
     var playerOne
@@ -234,8 +235,8 @@ export default function Tournament({ route, navigation }) {
 
   const nextRoundGenerator = (table) => {
     var round = findRounds(matches) - findCurrentRound(matches)
-    console.log("round " + round)
-    if(round === -1){
+    console.log('round ' + round)
+    if (round === -1) {
       setRound(findCurrentRound(matches) - 1)
     } else {
       setRound(findCurrentRound(matches))
@@ -280,32 +281,105 @@ export default function Tournament({ route, navigation }) {
           (err, result) => {
             var len = result.rows.length
             if (len == 0) {
-              alert('winner doesnt exist')
+              Alert.alert('winner doesnt exist')
             } else {
               let id = result.rows.item(0).ID
               let name = result.rows.item(0).Name
               let username = result.rows.item(0).Username
               let winner = { id, name, username }
               //console.log(winner)
-              matches
+              //find if the winner is set
+              let currentWinner = matches
                 .reverse()
                 .find(
                   (match) =>
-                    match.playerOne.id === parseInt(winnerID) ||
-                    match.playerTwo.id === parseInt(winnerID)
-                ).winner = winner
-              dispatch(setMatches(matches.reverse()))
-              //console.log(matches)
-              tx.executeSql(
-                'UPDATE Matches SET WinnerID = ? WHERE Player1ID = ? AND Player2ID = ?',
-                [parseInt(winnerID), parseInt(player1ID), parseInt(player2ID)]
-              )
-              if (
-                matches.find((match) => match.winner.id === 0) === undefined
-              ) {
-                nextRoundGenerator(table)
+                    match.playerOne.id === parseInt(player1ID) &&
+                    match.playerTwo.id === parseInt(player2ID)
+                )
+              if (currentWinner.winner.id !== 0) {
+                matches.reverse()
+                let index = matches.indexOf(currentWinner)
+                let sliceArray = matches.slice(index + 1)
+                sliceArray.forEach((element) => {
+                  if (element.playerOne.id === currentWinner.winner.id) {
+                    tx.executeSql(
+                      'UPDATE Matches SET WinnerID = ?, Player1ID = ?, Stol = ? WHERE Player1ID = ? AND Player2ID = ?',
+                      [
+                        0,
+                        winner.id,
+                        null,
+                        element.playerOne.id,
+                        element.playerTwo.id,
+                      ],
+                      (trans, result) => {
+                        console.log(result.rows.item(0))
+                      },
+                      (error) => {
+                        console.log(error)
+                      }
+                    )
+                    element.playerOne = winner
+                    element.table = ''
+                    element.winner = { id: 0, name: '', username: '' }
+                  }
+                  if (element.playerTwo.id === currentWinner.winner.id) {
+                    tx.executeSql(
+                      'UPDATE Matches SET WinnerID = ?, Player2ID = ?, Stol = ? WHERE Player1ID = ? AND Player2ID = ?',
+                      [
+                        0,
+                        winner.id,
+                        null,
+                        element.playerOne.id,
+                        element.playerTwo.id,
+                      ],
+                      (trans, result) => {
+                        console.log(result.rows.item(0))
+                      },
+                      (error) => {
+                        console.log(error)
+                      }
+                    )
+                    element.playerTwo = winner
+                    element.table = ''
+                    element.winner = { id: 0, name: '', username: '' }
+                  }
+                })
+                tx.executeSql(
+                  'UPDATE Matches SET WinnerID = ? WHERE Player1ID = ? AND Player2ID = ?',
+                  [
+                    parseInt(winner.id),
+                    parseInt(currentWinner.playerOne.id),
+                    parseInt(currentWinner.playerTwo.id),
+                  ],
+                  (trans, result) => {
+                    console.log(result.rows.item(0))
+                  },
+                  (error) => {
+                    console.log(error)
+                  }
+                )
+                console.log(winner)
+                currentWinner.winner = winner
+                dispatch(setMatches(matches))
               } else {
-                setNextMatch(table, matches, winnerID)
+                matches.find(
+                  (match) =>
+                    match.playerOne.id === parseInt(player1ID) &&
+                    match.playerTwo.id === parseInt(player2ID)
+                ).winner = winner
+                dispatch(setMatches(matches.reverse()))
+                //console.log(matches)
+                tx.executeSql(
+                  'UPDATE Matches SET WinnerID = ? WHERE Player1ID = ? AND Player2ID = ?',
+                  [parseInt(winnerID), parseInt(player1ID), parseInt(player2ID)]
+                )
+                if (
+                  matches.find((match) => match.winner.id === 0) === undefined
+                ) {
+                  nextRoundGenerator(table)
+                } else {
+                  setNextMatch(table, matches, winnerID)
+                }
               }
             }
           }
@@ -397,7 +471,7 @@ export default function Tournament({ route, navigation }) {
         <BackButton goBack={visitHome} />
       </View>
       <View>
-        {userType === "admin" ? (
+        {userType === 'admin' ? (
           <TouchableOpacity
             style={tw.style(
               'bg-yellow-500',
@@ -417,7 +491,9 @@ export default function Tournament({ route, navigation }) {
           <></>
         )}
       </View>
-      <Text style={styles.text}>Kolo zápasov: {round}/{rounds}</Text>
+      <Text style={styles.text}>
+        Kolo zápasov: {round}/{rounds}
+      </Text>
       <FlatList
         keyExtractor={(item, index) => index.toString()}
         data={matches}
