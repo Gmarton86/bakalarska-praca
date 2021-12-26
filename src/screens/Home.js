@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
+  Alert,
   FlatList,
   RefreshControl,
   ScrollView,
@@ -11,6 +12,9 @@ import TextButton from '../utils/textButton'
 import SQLite from 'react-native-sqlite-storage'
 import CustomButton from '../utils/customButton'
 import tw from 'tailwind-react-native-classnames'
+import { useDispatch, useSelector } from 'react-redux'
+import { setUserType } from '../redux/actions'
+
 
 const db = SQLite.openDatabase(
   {
@@ -32,6 +36,9 @@ export default function Tournaments({ navigation }) {
 
   const [refreshing, setRefreshing] = useState(false)
   const [tournament, setTournament] = useState([])
+  const [trainerCredential, setTrainerCredential] = useState({name: 'trainer', password: ''})
+  const { userType, trainerPasswd } = useSelector((state) => state.playerReducer)
+  const dispatch = useDispatch()
 
 
   const renderTournaments = async () => {
@@ -67,12 +74,44 @@ export default function Tournaments({ navigation }) {
     navigation.replace('Login')
   }
 
+  const visitCreate = () => {
+    navigation.replace('Create')
+  }
+
+  const signOff = () => {
+    dispatch(setUserType('player'))
+  }
+
+  const showCredentials = () => {
+    Alert.alert(`name: ${trainerCredential.name}\npassword: ${trainerPasswd}`)
+  }
+
   return (
     <View style={styles.body}>
       <View style={styles.login}>
-        <TextButton title="Prihlásenie" onPressFunction={visitLogin} />
+        {userType === 'admin' ? (
+          <View style={styles.login}>
+            <TextButton
+            
+              title="Údaje"
+              onPressFunction={showCredentials}
+            />
+            <TextButton
+            
+              title="Vytvor"
+              onPressFunction={visitCreate}
+            />
+          </View>
+        ) : (
+          <></>
+        )}
+        {userType === 'player' ? (
+          <TextButton title="Prihlásenie" onPressFunction={visitLogin} />
+        ) : (
+          <TextButton title="Odhlásenie" onPressFunction={signOff} />
+        )}
       </View>
-      <View style={tw.style('ml-3')}> 
+      <View style={tw.style('ml-3')}>
         <Text style={styles.text}>Prebiehajúce turnaje</Text>
       </View>
       <FlatList
@@ -117,7 +156,10 @@ const styles = StyleSheet.create({
   },
   login: {
     backgroundColor: '#000000',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'flex-end',
+    display: 'flex',
+    flexDirection: 'row',
+    minWidth: '100%',
   },
 })

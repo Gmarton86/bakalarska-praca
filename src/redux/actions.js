@@ -1,4 +1,5 @@
 export const SET_USER_TYPE = 'SET_USER_TYPE'
+export const SET_TRAINER_PASSWD = 'SET_TRAINER_PASSWD'
 export const SET_PLAYER_RANK = 'SET_PLAYER_RANK'
 export const SET_TOURNAMENT_MATCHES = 'SET_TOURNAMENT_MATCHES'
 export const UPDATE_WINNER = 'UPDATE_WINNER'
@@ -7,6 +8,13 @@ export const setUserType = (userType) => (dispatch) => {
   dispatch({
     type: SET_USER_TYPE,
     payload: userType,
+  })
+}
+
+export const setTrainerPasswd = (trainerPasswd) => (dispatch) => {
+  dispatch({
+    type: SET_TRAINER_PASSWD,
+    payload: trainerPasswd,
   })
 }
 

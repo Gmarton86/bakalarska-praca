@@ -397,7 +397,7 @@ export default function Tournament({ route, navigation }) {
         <BackButton goBack={visitHome} />
       </View>
       <View>
-        {winnerVisibility ? (
+        {userType === "admin" ? (
           <TouchableOpacity
             style={tw.style(
               'bg-yellow-500',

@@ -12,7 +12,7 @@ import BackButton from '../utils/backButton'
 
 import SQLite from 'react-native-sqlite-storage'
 import { useDispatch, useSelector } from 'react-redux'
-import { setUserType } from '../redux/actions'
+import { setUserType, setTrainerPasswd } from '../redux/actions'
 import tw from 'tailwind-react-native-classnames'
 
 
@@ -82,7 +82,7 @@ export default function Login({ navigation }) {
               if (len > 0) {
                 console.log(results.rows.item(0))
                 validateUser(email.value)
-                navigation.replace('Create')
+                dispatch(setTrainerPasswd(results.rows.item(0).TrainerPasswd))
               } else {
                 Alert.alert(
                   'Nesprávne meno alebo heslo!',
@@ -99,7 +99,6 @@ export default function Login({ navigation }) {
               var len = results.rows.length
               if (len > 0) {
                 validateUser(email.value)
-                navigation.replace('Home')
               } else {
                 Alert.alert(
                   'Nesprávne meno alebo heslo!',
@@ -112,6 +111,8 @@ export default function Login({ navigation }) {
       })
     } catch (error) {
       console.log(error)
+    } finally {
+      navigation.replace('Home')
     }
   }
 
