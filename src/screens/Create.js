@@ -10,11 +10,10 @@ import {
 import BackButton from '../utils/backButton'
 import MultiSelect from 'react-native-multiple-select'
 import SQLite from 'react-native-sqlite-storage'
-import { useDispatch, useSelector } from 'react-redux'
-import { setName, setRank } from '../redux/actions'
-import playerReducer from '../redux/reducers'
 import CustomButton from '../utils/customButton'
 import { LogBox } from 'react-native'
+import { useSelector } from 'react-redux'
+
 
 const db = SQLite.openDatabase(
   {
@@ -31,6 +30,7 @@ const db = SQLite.openDatabase(
 export default function Create({ navigation }) {
   // const { name, age } = useSelector((state) => {state.playerReducer})
   // const dispatch = useDispatch()
+  const { adminID } = useSelector((state) => state.playerReducer)
 
   const [players, setPlayers] = useState([])
   const [selected, setSelected] = useState([])
@@ -209,7 +209,7 @@ export default function Create({ navigation }) {
         tx.executeSql(
           'INSERT INTO Tournaments (Name, Tables, AdminID) VALUES (?, ?, ?)',
           //insert adminID
-          [name.value, tables, 1]
+          [name.value, tables, adminID]
         )
 
         generateTournamentMatches()

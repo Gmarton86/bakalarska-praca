@@ -12,7 +12,7 @@ import BackButton from '../utils/backButton'
 
 import SQLite from 'react-native-sqlite-storage'
 import { useDispatch, useSelector } from 'react-redux'
-import { setUserType, setTrainerPasswd } from '../redux/actions'
+import { setUserType, setTrainerPasswd, setAdminID } from '../redux/actions'
 import tw from 'tailwind-react-native-classnames'
 
 
@@ -75,7 +75,7 @@ export default function Login({ navigation }) {
       db.transaction((tx) => {
         if (email.value !== 'trainer') {
           tx.executeSql(
-            'SELECT Username, Password, TrainerPasswd, TrainerUsr FROM Users WHERE Username = ? and Password = ?',
+            'SELECT ID, Username, Password, TrainerPasswd, TrainerUsr FROM Users WHERE Username = ? and Password = ?',
             [email.value, password.value],
             (tx, results) => {
               var len = results.rows.length
@@ -83,6 +83,7 @@ export default function Login({ navigation }) {
                 console.log(results.rows.item(0))
                 validateUser(email.value)
                 dispatch(setTrainerPasswd(results.rows.item(0).TrainerPasswd))
+                dispatch(setAdminID(results.rows.item(0).ID))
               } else {
                 Alert.alert(
                   'Nesprávne meno alebo heslo!',
@@ -93,12 +94,14 @@ export default function Login({ navigation }) {
           )
         } else {
           tx.executeSql(
-            'SELECT Username, Password FROM Users WHERE TrainerUsr = ? and TrainerPasswd = ?',
+            'SELECT ID, Username, Password FROM Users WHERE TrainerUsr = ? and TrainerPasswd = ?',
             [email.value, password.value],
             (tx, results) => {
               var len = results.rows.length
               if (len > 0) {
                 validateUser(email.value)
+                dispatch(setTrainerPasswd(password.value))
+                dispatch(setAdminID(results.rows.item(0).ID))
               } else {
                 Alert.alert(
                   'Nesprávne meno alebo heslo!',

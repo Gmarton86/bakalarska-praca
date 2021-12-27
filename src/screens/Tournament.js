@@ -33,25 +33,22 @@ export default function Tournament({ route, navigation }) {
   const [player2, setPlayer2] = useState([])
   const [tables, setTables] = useState([])
   const [winners, setWinners] = useState([])
-  const [winnerVisibility, setWinnerVisibility] = useState(true)
+  const [winnerVisibility, setWinnerVisibility] = useState(false)
+  const [isOwner, setIsOwner] = useState(false)
   const [isWinner, setIsWinner] = useState(true)
   const [freeTables, setFreeTables] = useState([])
   const [numberOfTables, setNumberOfTables] = useState({ value: 0 })
   const [round, setRound] = useState(1)
   const [rounds, setRounds] = useState(4)
+  const [adminsID, setAdminsID] = useState(0)
   const { name } = route.params
 
-  const { matches, userType } = useSelector((state) => state.playerReducer)
+  const { matches, userType, adminID } = useSelector((state) => state.playerReducer)
   const dispatch = useDispatch()
 
   useEffect(() => {
     SQLite.enablePromise(true)
     passTournamentData()
-    if (userType !== 'player') {
-      setWinnerVisibility(true)
-    } else {
-      setWinnerVisibility(false)
-    }
   }, [])
 
   function wait() {
@@ -116,10 +113,22 @@ export default function Tournament({ route, navigation }) {
     try {
       await db.transaction((tx) => {
         tx.executeSql(
-          'Select Tables FROM Tournaments WHERE Name = ?',
+          'Select Tables, AdminID FROM Tournaments WHERE Name = ?',
           [name],
           (tx, results) => {
+            console.log(results.rows.item(0))
             numberOfTables.value = results.rows.item(0).Tables
+            setAdminsID(results.rows.item(0).AdminID)
+            console.log('admin ID: ' + results.rows.item(0).AdminID)
+            console.log('usertype: ' + userType)
+            console.log('logged admin: ' + adminID)
+            if (
+              userType !== 'player' &&
+              adminID === results.rows.item(0).AdminID
+            ) {
+              setWinnerVisibility(true)
+              setIsOwner(true)
+            }
           }
         )
         tx.executeSql(
@@ -471,7 +480,7 @@ export default function Tournament({ route, navigation }) {
         <BackButton goBack={visitHome} />
       </View>
       <View>
-        {userType === 'admin' ? (
+        {(userType === 'admin' && isOwner) ? (
           <TouchableOpacity
             style={tw.style(
               'bg-yellow-500',

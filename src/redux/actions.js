@@ -3,6 +3,7 @@ export const SET_TRAINER_PASSWD = 'SET_TRAINER_PASSWD'
 export const SET_PLAYER_RANK = 'SET_PLAYER_RANK'
 export const SET_TOURNAMENT_MATCHES = 'SET_TOURNAMENT_MATCHES'
 export const UPDATE_WINNER = 'UPDATE_WINNER'
+export const SET_ADMIN_ID = 'SET_ADMIN_ID'
 
 export const setUserType = (userType) => (dispatch) => {
   dispatch({
@@ -38,3 +39,11 @@ export const updateWinner = (matches) => (dispatch) => {
     payload: matches,
   })
 }
+
+export const setAdminID = (adminID) => (dispatch) => {
+  dispatch({
+    type: SET_ADMIN_ID,
+    payload: adminID,
+  })
+}
+

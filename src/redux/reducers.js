@@ -4,6 +4,8 @@ import {
   SET_PLAYER_RANK,
   SET_TOURNAMENT_MATCHES,
   UPDATE_WINNER,
+  SET_ADMIN_ID,
+ 
 } from './actions'
 
 //user_name can be player, trainer, admin, 
@@ -12,6 +14,7 @@ const initialState = {
   trainerPasswd: '',
   rank: 0,
   matches: [],
+  adminID: '',
 }
 
 function playerReducer(state = initialState, action) {
@@ -26,6 +29,8 @@ function playerReducer(state = initialState, action) {
       return { ...state, matches: action.payload }
     case UPDATE_WINNER:
       return { ...state, matches: action.payload }
+    case SET_ADMIN_ID:
+      return { ...state, adminID: action.payload }
     default:
       return state
   }
