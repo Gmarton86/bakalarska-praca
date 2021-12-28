@@ -479,27 +479,6 @@ export default function Tournament({ route, navigation }) {
       <View>
         <BackButton goBack={visitHome} />
       </View>
-      <View>
-        {(userType === 'admin' && isOwner) ? (
-          <TouchableOpacity
-            style={tw.style(
-              'bg-yellow-500',
-              'h-10',
-              'rounded-md',
-              'm-1.5',
-              'items-center',
-              'justify-center'
-            )}
-            onPress={() => deleteTournament()}
-          >
-            <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>
-              Zrušenie turnaju
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <></>
-        )}
-      </View>
       <Text style={styles.text}>
         Kolo zápasov: {round}/{rounds}
       </Text>
@@ -646,6 +625,26 @@ export default function Tournament({ route, navigation }) {
           </View>
         )}
       />
+      <View>
+        {userType === 'admin' && isOwner ? (
+          <TouchableOpacity
+            style={tw.style(
+              'bg-red-500',
+              'h-14',
+              'p-1.5',
+              'items-center',
+              'justify-center'
+            )}
+            onPress={() => deleteTournament()}
+          >
+            <Text style={tw.style('text-xl', 'font-bold', 'text-center')}>
+              Zrušenie turnaju
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <></>
+        )}
+      </View>
     </View>
   )
 }

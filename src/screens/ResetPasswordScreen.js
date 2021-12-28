@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TextInput, Alert } from 'react-native'
 import BackButton from '../utils/backButton'
 import CustomButton from '../utils/customButton'
 import SQLite from 'react-native-sqlite-storage'
+import tw from 'tailwind-react-native-classnames'
 
 const db = SQLite.openDatabase(
   {
@@ -45,13 +46,15 @@ export default function ResetPasswordScreen({ navigation }) {
 
   return (
     <View style={styles.body}>
-      <BackButton
-        goBack={() => {
-          navigation.replace('Home')
-        }}
-      />
+      <View style={tw.style('')}>
+        <BackButton
+          goBack={() => {
+            navigation.replace('Home')
+          }}
+        />
+      </View>
       <Text style={styles.text}>Obnova hesla</Text>
-      <Text>Zadaj meno:</Text>
+      <Text style={tw.style('text-xl', 'font-semibold')}>Zadaj meno:</Text>
       <TextInput
         style={styles.input}
         label="Name"
@@ -61,7 +64,9 @@ export default function ResetPasswordScreen({ navigation }) {
         error={!!name.error}
         errorText={name.error}
       />
-      <Text>Zadaj nové heslo:</Text>
+      <Text style={tw.style('text-xl', 'font-semibold')}>
+        Zadaj nové heslo:
+      </Text>
       <TextInput
         style={styles.input}
         label="Password"
@@ -70,7 +75,7 @@ export default function ResetPasswordScreen({ navigation }) {
         onChangeText={(text) => setPassword({ value: text })}
         secureTextEntry
       />
-      <Text>Zoopakuj heslo:</Text>
+      <Text style={tw.style('text-xl', 'font-semibold')}>Zoopakuj heslo:</Text>
       <TextInput
         style={styles.input}
         label="Password"
@@ -92,13 +97,15 @@ export default function ResetPasswordScreen({ navigation }) {
 const styles = StyleSheet.create({
   body: {
     flex: 1,
-    margin: 5,
+    padding: 5,
     backgroundColor: '#FFFFFF',
   },
   text: {
     color: '#000000',
     textAlign: 'center',
     fontSize: 30,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
   },
   input: {
     borderWidth: 1,

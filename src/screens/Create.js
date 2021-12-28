@@ -13,7 +13,7 @@ import SQLite from 'react-native-sqlite-storage'
 import CustomButton from '../utils/customButton'
 import { LogBox } from 'react-native'
 import { useSelector } from 'react-redux'
-
+import tw from 'tailwind-react-native-classnames'
 
 const db = SQLite.openDatabase(
   {
@@ -261,7 +261,9 @@ export default function Create({ navigation }) {
         <BackButton goBack={visitHome} />
         <Text style={styles.text}>Tournament creation</Text>
         <View>
-          <Text>Zadaj meno turnaja:</Text>
+          <Text style={tw.style('text-xl', 'font-semibold')}>
+            Zadaj meno turnaja:
+          </Text>
           <TextInput
             id="nameInput"
             style={styles.input}
@@ -272,7 +274,9 @@ export default function Create({ navigation }) {
           />
         </View>
         <View>
-          <Text>Zadaj počet stolov:</Text>
+          <Text style={tw.style('text-xl', 'font-semibold')}>
+            Zadaj počet stolov:
+          </Text>
           <TextInput
             id="numberOfTableInput"
             style={styles.input}

@@ -20,18 +20,19 @@ const CustomButton = (props) => {
 
 const styles = StyleSheet.create({
   text: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 20,
+    letterSpacing: 1
   },
   button: {
     width: 110,
     height: 50,
-    alignItems: "center",
-    backgroundColor: "#0000FF",
-    justifyContent: "center",
+    alignItems: 'center',
+    backgroundColor: 'rgba(37, 99, 235, 1)',
+    justifyContent: 'center',
     margin: 10,
     borderRadius: 10,
   },
-});
+})
 
 export default CustomButton;

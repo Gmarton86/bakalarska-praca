@@ -15,7 +15,6 @@ import tw from 'tailwind-react-native-classnames'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserType } from '../redux/actions'
 
-
 const db = SQLite.openDatabase(
   {
     name: 'LoginDB',
@@ -29,36 +28,35 @@ const db = SQLite.openDatabase(
 )
 
 export default function Tournaments({ navigation }) {
-
   useEffect(() => {
     renderTournaments()
   }, [])
 
   const [refreshing, setRefreshing] = useState(false)
   const [tournament, setTournament] = useState([])
-  const [trainerCredential, setTrainerCredential] = useState({name: 'trainer', password: ''})
-  const { userType, trainerPasswd } = useSelector((state) => state.playerReducer)
+  const [trainerCredential, setTrainerCredential] = useState({
+    name: 'trainer',
+    password: '',
+  })
+  const { userType, trainerPasswd } = useSelector(
+    (state) => state.playerReducer
+  )
   const dispatch = useDispatch()
-
 
   const renderTournaments = async () => {
     tournament.pop()
     try {
       db.transaction((tx) => {
-        tx.executeSql(
-          'SELECT Name FROM Tournaments',
-          [],
-          (tx, results) => {
-            var len = results.rows.length
-            console.log('Number of tournaments: ' + len)
-            if (len > 0) {
-              for (let i = 0; i < len; i++) {
-                var name = results.rows.item(i).Name
-                setTournament(prevState => [...prevState, {name}])
-              }
+        tx.executeSql('SELECT Name FROM Tournaments', [], (tx, results) => {
+          var len = results.rows.length
+          console.log('Number of tournaments: ' + len)
+          if (len > 0) {
+            for (let i = 0; i < len; i++) {
+              var name = results.rows.item(i).Name
+              setTournament((prevState) => [...prevState, { name }])
             }
           }
-        )
+        })
       })
     } catch (error) {
       console.log(error)
@@ -89,26 +87,20 @@ export default function Tournaments({ navigation }) {
   return (
     <View style={styles.body}>
       <View style={styles.login}>
-        {userType === 'admin' ? (
-          <View style={styles.login}>
-            <TextButton
-            
-              title="Údaje"
-              onPressFunction={showCredentials}
-            />
-            <TextButton
-            
-              title="Vytvor"
-              onPressFunction={visitCreate}
-            />
-          </View>
-        ) : (
-          <></>
-        )}
         {userType === 'player' ? (
           <TextButton title="Prihlásenie" onPressFunction={visitLogin} />
         ) : (
           <TextButton title="Odhlásenie" onPressFunction={signOff} />
+        )}
+        {userType === 'admin' ? (
+          <TextButton title="Údaje" onPressFunction={showCredentials} />
+        ) : (
+          <></>
+        )}
+        {userType === 'admin' ? (
+          <TextButton title="Vytvor" onPressFunction={visitCreate} />
+        ) : (
+          <></>
         )}
       </View>
       <View style={tw.style('ml-3')}>
@@ -141,7 +133,9 @@ export default function Tournaments({ navigation }) {
 const styles = StyleSheet.create({
   body: {
     backgroundColor: '#FFFFFF',
-    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    minHeight: '100%',
   },
   text: {
     fontSize: 30,
@@ -149,6 +143,7 @@ const styles = StyleSheet.create({
   },
   item: {
     margin: 5,
+    minWidth: '80%',
     backgroundColor: '#4ae',
     justifyContent: 'center',
     alignItems: 'center',
@@ -156,10 +151,9 @@ const styles = StyleSheet.create({
   },
   login: {
     backgroundColor: '#000000',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
     display: 'flex',
     flexDirection: 'row',
-    minWidth: '100%',
+    paddingLeft: 5,
+    textAlign: 'center'
   },
 })
