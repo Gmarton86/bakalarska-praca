@@ -192,6 +192,10 @@ export default function Create({ navigation }) {
 
   const createTournament = () => {
     var tables = parseInt(NumberOfTables.value)
+    if(tables <= 0 || name.value === ''){
+      Alert.alert('Udaje turnaja sú chybné')
+      return -1; 
+    }
     //console.log(tables)
     //console.log(name.value)
     try {

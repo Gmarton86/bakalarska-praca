@@ -75,6 +75,9 @@ export default function Tournaments({ navigation }) {
   const visitCreate = () => {
     navigation.replace('Create')
   }
+   const visitRegister = () => {
+     navigation.replace('Register')
+   }
 
   const signOff = () => {
     dispatch(setUserType('player'))
@@ -99,6 +102,11 @@ export default function Tournaments({ navigation }) {
         )}
         {userType === 'admin' ? (
           <TextButton title="Vytvor" onPressFunction={visitCreate} />
+        ) : (
+          <></>
+        )}
+        {userType === 'player' ? (
+          <TextButton title="Registrácia" onPressFunction={visitRegister} />
         ) : (
           <></>
         )}

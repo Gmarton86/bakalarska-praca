@@ -28,8 +28,6 @@ const db = SQLite.openDatabase(
 )
 
 export default function Register({ navigation }) {
-  
-
   useEffect(() => {
     createTable()
   }, [])
@@ -49,16 +47,6 @@ export default function Register({ navigation }) {
     })
   }
 
-  // const addPlayers = () => {
-  //   db.transaction((tx) => {
-  //     for(var i = 0; i < players.length; i++){
-  //       tx.executeSql('INSERT INTO Players (Name, Username, DateOfBirth, Rank) VALUES (?, ?, ?, ?)', 
-  //         [players[i].Name, players[i].Username, players[i].DateOfBirth, players[i].Rank]
-  //     )
-  //     }
-  //   })
-  // }
-
   const generateString = (length) => {
     var result = ''
     var characters =
@@ -70,16 +58,17 @@ export default function Register({ navigation }) {
     return result
   }
 
-  const [name, setName] = useState({ value: '', error: '' })
+  const [repeatPassword, setRepeatPassword] = useState({ value: '', error: '' })
   const [email, setEmail] = useState({ value: '', error: '' })
   const [password, setPassword] = useState({ value: '', error: '' })
 
   const onSignUpPressed = () => {
-    const nameError = nameValidator(name.value)
+    const nameError = nameValidator(repeatPassword.value)
     const emailError = emailValidator(email.value)
     const passwordError = passwordValidator(password.value)
-    if (emailError || passwordError || nameError) {
-      setName({ ...name, error: nameError })
+    if (emailError || repeatPassword.value !== password.value) {
+      Alert.alert('Hesla sa nezhodujú!')
+      setRepeatPassword({ ...repeatPassword, error: nameError })
       setEmail({ ...email, error: emailError })
       setPassword({ ...password, error: passwordError })
       return
@@ -118,47 +107,11 @@ export default function Register({ navigation }) {
           )
         })
 
-        //  db.transaction( (tx) => {
-        //    tx.executeSql(
-        //     "INSERT INTO Users (Username, Password) VALUES (?, ?)",
-        //     ['erikzurvalec86@gmail.com', 'admin']
-        //   );
-        // });
-
-        // db.transaction((tx) => {
-        //   tx.executeSql(
-        //     "SELECT * FROM Users", [],
-        //     (tx, results) => {
-        //       var len = results.rows.length;
-        //       console.log('item:', results.rows.length);
-        //       console.log(results.rows.item(0).Username);
-        //       console.log(results.rows.item(0).Password)
-        //       // if (len > 0) {
-        //       //   var userName = results.rows.item(0).Username;
-        //       //   var pass = results.rows.item(0).Password;
-        //       //   setEmailDB(userName);
-        //       //   setPasswordDB(pass);
-        //       //   console.log(emailDB);
-        //       // }
-        //     }
-        //   );
-        // });
-        // db.transaction((tx) => {
-        //   tx.executeSql(
-        //     "DELETE FROM Users", [], () => {console.log('success')}, error => {console.log(error)}
-        //   )
-        // })
-
         navigation.replace('Login')
       } catch (error) {
         console.log(error)
       }
     }
-
-    // navigation.reset({
-    //   index: 0,
-    //   routes: [{ name: "Dashboard" }],
-    // });
   }
   return (
     <View style={styles.body}>
@@ -168,16 +121,6 @@ export default function Register({ navigation }) {
         }}
       />
       <Text style={styles.text}>Výtvorenie účtu</Text>
-      <Text style={tw.style('text-xl', 'font-semibold')}>Zadaj meno</Text>
-      <TextInput
-        style={styles.input}
-        label="Name"
-        returnKeyType="next"
-        value={name.value}
-        onChangeText={(text) => setName({ value: text, error: '' })}
-        error={!!name.error}
-        errorText={name.error}
-      />
       <Text style={tw.style('text-xl', 'font-semibold')}>Zadaj email</Text>
       <TextInput
         style={styles.input}
@@ -202,6 +145,14 @@ export default function Register({ navigation }) {
         error={!!password.error}
         errorText={password.error}
         secureTextEntry
+      />
+      <Text style={tw.style('text-xl', 'font-semibold')}>Zoopakuj heslo</Text>
+      <TextInput
+        style={styles.input}
+        label="Name"
+        returnKeyType="next"
+        value={repeatPassword.value}
+        onChangeText={(text) => setRepeatPassword({ value: text, error: '' })}
       />
       <CustomButton
         title="Potvrdiť"
@@ -237,13 +188,6 @@ export default function Register({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* <CustomButton
-        title="Add players"
-        color="#1eb900"
-        style={{ width: '30%', marginTop: 24 }}
-        onPressFunction={addPlayers}
-      /> */}
     </View>
   )
 }
