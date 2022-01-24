@@ -12,6 +12,7 @@ import {
 import BackButton from '../utils/backButton'
 import SQLite from 'react-native-sqlite-storage'
 import tw from 'tailwind-react-native-classnames'
+import CustomButton from '../utils/customButton'
 import { useDispatch, useSelector } from 'react-redux'
 import { setMatches, setUserType } from '../redux/actions'
 
@@ -32,18 +33,24 @@ export default function Tournament({ route, navigation }) {
   const [player1, setPlayer1] = useState([])
   const [player2, setPlayer2] = useState([])
   const [tables, setTables] = useState([])
+  const [scores, setScores] = useState([])
   const [winners, setWinners] = useState([])
   const [winnerVisibility, setWinnerVisibility] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
   const [isWinner, setIsWinner] = useState(true)
   const [freeTables, setFreeTables] = useState([])
   const [numberOfTables, setNumberOfTables] = useState({ value: 0 })
+  const [player1Input, setPlayer1Input] = useState(false)
+  const [player2Input, setPlayer2Input] = useState(false)
   const [round, setRound] = useState(1)
   const [rounds, setRounds] = useState(4)
   const [adminsID, setAdminsID] = useState(0)
+  const [score, setScore] = useState({ value: '' })
   const { name } = route.params
 
-  const { matches, userType, adminID } = useSelector((state) => state.playerReducer)
+  const { matches, userType, adminID } = useSelector(
+    (state) => state.playerReducer
+  )
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -59,9 +66,20 @@ export default function Tournament({ route, navigation }) {
       var playerOne = player1[i]
       var playerTwo = player2[i]
       var table = tables[i]
+      var score = scores[i]
+      var player1Input = false
+      var player2Input = false
       var winner = winners.find((pos) => pos.pos === i).winner
       //console.log(winner)
-      var c = { playerOne, playerTwo, table, winner }
+      var c = {
+        playerOne,
+        playerTwo,
+        table,
+        winner,
+        score,
+        player1Input,
+        player2Input
+      }
       //console.log(playerTwo)
       // if(playerTwo.id != 0){
       //   c = { playerOne, playerTwo, table, winner }
@@ -73,7 +91,15 @@ export default function Tournament({ route, navigation }) {
       newMatch = [...newMatch, c]
       setMatch((prevState) => [
         ...prevState,
-        { playerOne, playerTwo, table, winner },
+        {
+          playerOne,
+          playerTwo,
+          table,
+          winner,
+          score,
+          player1Input,
+          player2Input
+        },
       ])
       //match.push(c)
     }
@@ -132,7 +158,7 @@ export default function Tournament({ route, navigation }) {
           }
         )
         tx.executeSql(
-          'SELECT Player1ID, Player2ID, Stol, WinnerID FROM Matches WHERE Matches.TournamentName=?',
+          'SELECT Player1ID, Player2ID, Stol, WinnerID, Score FROM Matches WHERE Matches.TournamentName=?',
           [name],
           async (err, results) => {
             var len = results.rows.length
@@ -173,6 +199,11 @@ export default function Tournament({ route, navigation }) {
                 tables.push('')
               } else {
                 tables.push(results.rows.item(i).Stol)
+              }
+              if (results.rows.item(i).Score === null) {
+                scores.push('')
+              } else {
+                scores.push(results.rows.item(i).Score)
               }
 
               //console.log(results.rows.item(i).WinnerID)
@@ -262,6 +293,7 @@ export default function Tournament({ route, navigation }) {
         playerTwo: matches[posTwo].winner,
         table: '',
         winner: { id: 0, name: '', username: '' },
+        score: ''
       }
       db.transaction((tx) => {
         tx.executeSql(
@@ -312,10 +344,11 @@ export default function Tournament({ route, navigation }) {
                 sliceArray.forEach((element) => {
                   if (element.playerOne.id === currentWinner.winner.id) {
                     tx.executeSql(
-                      'UPDATE Matches SET WinnerID = ?, Player1ID = ?, Stol = ? WHERE Player1ID = ? AND Player2ID = ?',
+                      'UPDATE Matches SET WinnerID = ?, Player1ID = ?, Stol = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
                       [
                         0,
                         winner.id,
+                        null,
                         null,
                         element.playerOne.id,
                         element.playerTwo.id,
@@ -330,13 +363,15 @@ export default function Tournament({ route, navigation }) {
                     element.playerOne = winner
                     element.table = ''
                     element.winner = { id: 0, name: '', username: '' }
+                    element.score = ''
                   }
                   if (element.playerTwo.id === currentWinner.winner.id) {
                     tx.executeSql(
-                      'UPDATE Matches SET WinnerID = ?, Player2ID = ?, Stol = ? WHERE Player1ID = ? AND Player2ID = ?',
+                      'UPDATE Matches SET WinnerID = ?, Player2ID = ?, Stol = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
                       [
                         0,
                         winner.id,
+                        null,
                         null,
                         element.playerOne.id,
                         element.playerTwo.id,
@@ -351,12 +386,14 @@ export default function Tournament({ route, navigation }) {
                     element.playerTwo = winner
                     element.table = ''
                     element.winner = { id: 0, name: '', username: '' }
+                    element.score = ''
                   }
                 })
                 tx.executeSql(
-                  'UPDATE Matches SET WinnerID = ? WHERE Player1ID = ? AND Player2ID = ?',
+                  'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
                   [
                     parseInt(winner.id),
+                    score.value,
                     parseInt(currentWinner.playerOne.id),
                     parseInt(currentWinner.playerTwo.id),
                   ],
@@ -369,6 +406,7 @@ export default function Tournament({ route, navigation }) {
                 )
                 console.log(winner)
                 currentWinner.winner = winner
+                currentWinner.score = score.value
                 dispatch(setMatches(matches))
               } else {
                 matches.find(
@@ -376,11 +414,16 @@ export default function Tournament({ route, navigation }) {
                     match.playerOne.id === parseInt(player1ID) &&
                     match.playerTwo.id === parseInt(player2ID)
                 ).winner = winner
+                matches.find(
+                  (match) =>
+                    match.playerOne.id === parseInt(player1ID) &&
+                    match.playerTwo.id === parseInt(player2ID)
+                ).score = score.value
                 dispatch(setMatches(matches.reverse()))
                 //console.log(matches)
                 tx.executeSql(
-                  'UPDATE Matches SET WinnerID = ? WHERE Player1ID = ? AND Player2ID = ?',
-                  [parseInt(winnerID), parseInt(player1ID), parseInt(player2ID)]
+                  'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
+                  [parseInt(winnerID),score.value, parseInt(player1ID), parseInt(player2ID)]
                 )
                 if (
                   matches.find((match) => match.winner.id === 0) === undefined
@@ -556,7 +599,12 @@ export default function Tournament({ route, navigation }) {
               {isWinner ? (
                 <View>
                   <Text style={styles.text}>
-                    Víťaz: {item.winner.name + ' ' + item.winner.username}
+                    Víťaz:{' '}
+                    {item.winner.name +
+                      ' ' +
+                      item.winner.username +
+                      ' ' +
+                      item.score}
                   </Text>
                 </View>
               ) : (
@@ -576,12 +624,17 @@ export default function Tournament({ route, navigation }) {
                         'justify-center'
                       )}
                       onPress={() =>
-                        setWinner(
-                          item.playerOne.id,
-                          item.playerOne.id,
-                          item.playerTwo.id,
-                          item.table
-                        )
+                        // setWinner(
+                        //   item.playerOne.id,
+                        //   item.playerOne.id,
+                        //   item.playerTwo.id,
+                        //   item.table
+                        // )
+                        {
+                          item.player1Input = true
+                          setPlayer1Input(true)
+                          console.log(item.player1Input)
+                        }
                       }
                     >
                       <Text
@@ -590,6 +643,43 @@ export default function Tournament({ route, navigation }) {
                         Hráč 1.
                       </Text>
                     </TouchableOpacity>
+
+                    {item.player1Input && player1Input ? (
+                      <View style={tw.style('m-1.5')}>
+                        <Text style={tw.style('text-xl', 'font-semibold')}>
+                          Zadaj skóre zápasu:
+                        </Text>
+                        <TextInput
+                          id="scoreInput"
+                          style={styles.input}
+                          label="Name"
+                          placeholder="Meno"
+                          value={score.value}
+                          onChangeText={(text) => setScore({ value: text })}
+                        />
+                        <CustomButton
+                          title="Potvrdiť"
+                          style={{ width: '80%', marginTop: 24 }}
+                          onPressFunction={() => {
+                            const regex = /^([0-9]{1})+:([0-9]{1})$/
+                            if (!regex.test(score.value)) {
+                              Alert.alert('Error', 'Zlý format')
+                            } else {
+                              setWinner(
+                                item.playerOne.id,
+                                item.playerOne.id,
+                                item.playerTwo.id,
+                                item.table
+                              )
+                              setPlayer1Input(false)
+                              item.player1Input = false
+                            }
+                          }}
+                        />
+                      </View>
+                    ) : (
+                      <></>
+                    )}
                   </View>
                   <View>
                     <TouchableOpacity
@@ -601,14 +691,10 @@ export default function Tournament({ route, navigation }) {
                         'items-center',
                         'justify-center'
                       )}
-                      onPress={() =>
-                        setWinner(
-                          item.playerTwo.id,
-                          item.playerOne.id,
-                          item.playerTwo.id,
-                          item.table
-                        )
-                      }
+                      onPress={() => {
+                        item.player2Input = true
+                        setPlayer2Input(true)
+                      }}
                     >
                       <Text
                         style={tw.style('text-xl', 'font-bold', 'text-center')}
@@ -616,6 +702,42 @@ export default function Tournament({ route, navigation }) {
                         Hráč 2.
                       </Text>
                     </TouchableOpacity>
+                    {item.player2Input && player2Input ? (
+                      <View style={tw.style('m-1.5')}>
+                        <Text style={tw.style('text-xl', 'font-semibold')}>
+                          Zadaj skóre zápasu:
+                        </Text>
+                        <TextInput
+                          id="score2Input"
+                          style={styles.input}
+                          label="Name"
+                          placeholder="Meno"
+                          value={score.value}
+                          onChangeText={(text) => setScore({ value: text })}
+                        />
+                        <CustomButton
+                          title="Potvrdiť"
+                          style={{ width: '80%', marginTop: 24 }}
+                          onPressFunction={() => {
+                            const regex = /^([0-9]{1})+:([0-9]{1})$/
+                            if (!regex.test(score.value)) {
+                              Alert.alert('Error', 'Zlý format')
+                            } else {
+                              setWinner(
+                                item.playerTwo.id,
+                                item.playerOne.id,
+                                item.playerTwo.id,
+                                item.table
+                              )
+                              item.player2Input = false
+                              setPlayer2Input(false)
+                            }
+                          }}
+                        />
+                      </View>
+                    ) : (
+                      <></>
+                    )}
                   </View>
                 </View>
               ) : (
@@ -672,5 +794,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'flex-end',
+  },
+  input: {
+    borderWidth: 1,
+    width: 300,
+    borderRadius: 5,
+    textAlign: 'center',
+    fontSize: 20,
   },
 })

@@ -135,7 +135,8 @@ export default function Tournaments({ navigation }) {
             <TouchableOpacity
               onPress={() => {
                 Alert.alert(
-                  `Podrobnosti`, `miesto: ${item.place}\ndátum: ${item.date}\nčas: ${item.time}`
+                  `Podrobnosti`,
+                  `miesto: ${item.place}\ndátum: ${item.date}\nčas: ${item.time}`
                 )
                 // try {
                 //   db.transaction((tx) => {
@@ -152,9 +153,7 @@ export default function Tournaments({ navigation }) {
                 // } catch (error) {
                 //   console.log(error)
                 // }
-              }
-                
-              }
+              }}
             >
               <Icon
                 name="info-circle"
@@ -169,6 +168,27 @@ export default function Tournaments({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+      {/* <TouchableOpacity
+        onPress={() => {
+         
+          try {
+            db.transaction((tx) => {
+              tx.executeSql(
+                'ALTER TABLE Matches ADD COLUMN Score TEXT'
+              )
+            })
+          } catch (error) {
+            console.log(error)
+          }
+        }}
+      >
+        <Icon
+          name="info-circle"
+          size={30}
+          color="#4ae"
+          style={tw.style('ml-3')}
+        />
+      </TouchableOpacity> */}
     </View>
   )
 }
