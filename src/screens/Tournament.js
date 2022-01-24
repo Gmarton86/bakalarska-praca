@@ -44,6 +44,7 @@ export default function Tournament({ route, navigation }) {
   const [player2Input, setPlayer2Input] = useState(false)
   const [round, setRound] = useState(1)
   const [rounds, setRounds] = useState(4)
+  const [lines, setLines] = useState([])
   const [adminsID, setAdminsID] = useState(0)
   const [score, setScore] = useState({ value: '' })
   const { name } = route.params
@@ -78,7 +79,7 @@ export default function Tournament({ route, navigation }) {
         winner,
         score,
         player1Input,
-        player2Input
+        player2Input,
       }
       //console.log(playerTwo)
       // if(playerTwo.id != 0){
@@ -98,7 +99,7 @@ export default function Tournament({ route, navigation }) {
           winner,
           score,
           player1Input,
-          player2Input
+          player2Input,
         },
       ])
       //match.push(c)
@@ -114,8 +115,20 @@ export default function Tournament({ route, navigation }) {
         freeTables.push(i)
       }
     }
+    setRoundLines(rounds)
     console.log(freeTables)
     return 0
+  }
+
+  const setRoundLines = () => {
+    let i = rounds - 1
+    let sum = 0
+    while (sum < 2 ** rounds && i > 0) {
+      sum += 2 ** i
+      setLines((oldArray) => [...oldArray, sum])
+      i--
+      console.log(sum)
+    }
   }
 
   const find = (competitor) => {
@@ -293,7 +306,7 @@ export default function Tournament({ route, navigation }) {
         playerTwo: matches[posTwo].winner,
         table: '',
         winner: { id: 0, name: '', username: '' },
-        score: ''
+        score: '',
       }
       db.transaction((tx) => {
         tx.executeSql(
@@ -423,7 +436,12 @@ export default function Tournament({ route, navigation }) {
                 //console.log(matches)
                 tx.executeSql(
                   'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
-                  [parseInt(winnerID),score.value, parseInt(player1ID), parseInt(player2ID)]
+                  [
+                    parseInt(winnerID),
+                    score.value,
+                    parseInt(player1ID),
+                    parseInt(player2ID),
+                  ]
                 )
                 if (
                   matches.find((match) => match.winner.id === 0) === undefined
@@ -531,218 +549,241 @@ export default function Tournament({ route, navigation }) {
         inverted={true}
         initialNumToRender={4}
         renderItem={({ item, index }) => (
-          <View
-            style={tw.style(
-              'flex',
-              'flex-col',
-              'bg-blue-400',
-              'm-1',
-              'rounded-md'
-            )}
-          >
-            {item.table !== '' && item.winner.name === '' ? (
+          <View>
+            {(lines.find((e) => e === index + 1) !== undefined) && (index+1 !== matches.length) ? (
               <View
                 style={tw.style(
-                  'w-5',
+                  'bg-green-500',
                   'h-5',
-                  'bg-green-300',
-                  'flex-1',
-                  'mt-2',
-                  'self-center',
-                  'rounded-full'
+                  'w-full',
+                  'mb-2',
+                  'mt-2'
                 )}
-              >
-                <Text style={tw.style('text-center', 'font-bold')}>
-                  {(index + 1).toString()}
-                </Text>
-              </View>
-            ) : (
-              <View
-                style={tw.style(
-                  'w-5',
-                  'h-5',
-                  'bg-red-600',
-                  'flex-1',
-                  'mt-2',
-                  'self-center',
-                  'rounded-full'
-                )}
-              >
-                <Text style={tw.style('text-center', 'font-bold')}>
-                  {(index + 1).toString()}
-                </Text>
-              </View>
-            )}
-
-            <View style={tw.style('flex-1')}>
-              <Text style={styles.text}>
-                Hráč 1:{' '}
-                {(
-                  item.playerOne.name +
-                  ' ' +
-                  item.playerOne.username
-                ).toString()}
-              </Text>
-              <Text style={styles.text}>
-                Hráč 2: {item.playerTwo.name + ' ' + item.playerTwo.username}
-              </Text>
-            </View>
-            {item.winner.name === '' ? (
-              <View style={tw.style('flex-1')}>
-                <Text style={styles.text}>Stôl: {item.table}</Text>
-              </View>
+              ><Text style={tw.style('text-center')}>Ďalšie kolo</Text></View>
             ) : (
               <></>
             )}
-
-            <View style={tw.style('flex-1')}>
-              {isWinner ? (
-                <View>
-                  <Text style={styles.text}>
-                    Víťaz:{' '}
-                    {item.winner.name +
-                      ' ' +
-                      item.winner.username +
-                      ' ' +
-                      item.score}
+            <View
+              style={tw.style(
+                'flex',
+                'flex-col',
+                'bg-blue-400',
+                'm-1',
+                'rounded-md'
+              )}
+            >
+              {item.table !== '' && item.winner.name === '' ? (
+                <View
+                  style={tw.style(
+                    'w-5',
+                    'h-5',
+                    'bg-green-300',
+                    'flex-1',
+                    'mt-2',
+                    'self-center',
+                    'rounded-full'
+                  )}
+                >
+                  <Text style={tw.style('text-center', 'font-bold')}>
+                    {(index + 1).toString()}
                   </Text>
                 </View>
               ) : (
-                <></>
+                <View
+                  style={tw.style(
+                    'w-5',
+                    'h-5',
+                    'bg-red-600',
+                    'flex-1',
+                    'mt-2',
+                    'self-center',
+                    'rounded-full'
+                  )}
+                >
+                  <Text style={tw.style('text-center', 'font-bold')}>
+                    {(index + 1).toString()}
+                  </Text>
+                </View>
               )}
-              {winnerVisibility && item.playerTwo.username !== '' ? (
-                <View>
-                  <Text style={styles.text}>Zvoľ víťaza:</Text>
-                  <View>
-                    <TouchableOpacity
-                      style={tw.style(
-                        'bg-yellow-500',
-                        'h-10',
-                        'rounded-md',
-                        'm-1.5',
-                        'items-center',
-                        'justify-center'
-                      )}
-                      onPress={() =>
-                        // setWinner(
-                        //   item.playerOne.id,
-                        //   item.playerOne.id,
-                        //   item.playerTwo.id,
-                        //   item.table
-                        // )
-                        {
-                          item.player1Input = true
-                          setPlayer1Input(true)
-                          console.log(item.player1Input)
-                        }
-                      }
-                    >
-                      <Text
-                        style={tw.style('text-xl', 'font-bold', 'text-center')}
-                      >
-                        Hráč 1.
-                      </Text>
-                    </TouchableOpacity>
 
-                    {item.player1Input && player1Input ? (
-                      <View style={tw.style('m-1.5')}>
-                        <Text style={tw.style('text-xl', 'font-semibold')}>
-                          Zadaj skóre zápasu:
-                        </Text>
-                        <TextInput
-                          id="scoreInput"
-                          style={styles.input}
-                          label="Name"
-                          placeholder="Meno"
-                          value={score.value}
-                          onChangeText={(text) => setScore({ value: text })}
-                        />
-                        <CustomButton
-                          title="Potvrdiť"
-                          style={{ width: '80%', marginTop: 24 }}
-                          onPressFunction={() => {
-                            const regex = /^([0-9]{1})+:([0-9]{1})$/
-                            if (!regex.test(score.value)) {
-                              Alert.alert('Error', 'Zlý format')
-                            } else {
-                              setWinner(
-                                item.playerOne.id,
-                                item.playerOne.id,
-                                item.playerTwo.id,
-                                item.table
-                              )
-                              setPlayer1Input(false)
-                              item.player1Input = false
-                            }
-                          }}
-                        />
-                      </View>
-                    ) : (
-                      <></>
-                    )}
-                  </View>
-                  <View>
-                    <TouchableOpacity
-                      style={tw.style(
-                        'bg-yellow-500',
-                        'h-10',
-                        'rounded-md',
-                        'm-1.5',
-                        'items-center',
-                        'justify-center'
-                      )}
-                      onPress={() => {
-                        item.player2Input = true
-                        setPlayer2Input(true)
-                      }}
-                    >
-                      <Text
-                        style={tw.style('text-xl', 'font-bold', 'text-center')}
-                      >
-                        Hráč 2.
-                      </Text>
-                    </TouchableOpacity>
-                    {item.player2Input && player2Input ? (
-                      <View style={tw.style('m-1.5')}>
-                        <Text style={tw.style('text-xl', 'font-semibold')}>
-                          Zadaj skóre zápasu:
-                        </Text>
-                        <TextInput
-                          id="score2Input"
-                          style={styles.input}
-                          label="Name"
-                          placeholder="Meno"
-                          value={score.value}
-                          onChangeText={(text) => setScore({ value: text })}
-                        />
-                        <CustomButton
-                          title="Potvrdiť"
-                          style={{ width: '80%', marginTop: 24 }}
-                          onPressFunction={() => {
-                            const regex = /^([0-9]{1})+:([0-9]{1})$/
-                            if (!regex.test(score.value)) {
-                              Alert.alert('Error', 'Zlý format')
-                            } else {
-                              setWinner(
-                                item.playerTwo.id,
-                                item.playerOne.id,
-                                item.playerTwo.id,
-                                item.table
-                              )
-                              item.player2Input = false
-                              setPlayer2Input(false)
-                            }
-                          }}
-                        />
-                      </View>
-                    ) : (
-                      <></>
-                    )}
-                  </View>
+              <View style={tw.style('flex-1')}>
+                <Text style={styles.text}>
+                  Hráč 1:{' '}
+                  {(
+                    item.playerOne.name +
+                    ' ' +
+                    item.playerOne.username
+                  ).toString()}
+                </Text>
+                <Text style={styles.text}>
+                  Hráč 2: {item.playerTwo.name + ' ' + item.playerTwo.username}
+                </Text>
+              </View>
+              {item.winner.name === '' ? (
+                <View style={tw.style('flex-1')}>
+                  <Text style={styles.text}>Stôl: {item.table}</Text>
                 </View>
               ) : (
                 <></>
               )}
+
+              <View style={tw.style('flex-1')}>
+                {isWinner ? (
+                  <View>
+                    <Text style={styles.text}>
+                      Víťaz:{' '}
+                      {item.winner.name +
+                        ' ' +
+                        item.winner.username +
+                        ' ' +
+                        item.score}
+                    </Text>
+                  </View>
+                ) : (
+                  <></>
+                )}
+                {winnerVisibility && item.playerTwo.username !== '' ? (
+                  <View>
+                    <Text style={styles.text}>Zvoľ víťaza:</Text>
+                    <View>
+                      <TouchableOpacity
+                        style={tw.style(
+                          'bg-yellow-500',
+                          'h-10',
+                          'rounded-md',
+                          'm-1.5',
+                          'items-center',
+                          'justify-center'
+                        )}
+                        onPress={() =>
+                          // setWinner(
+                          //   item.playerOne.id,
+                          //   item.playerOne.id,
+                          //   item.playerTwo.id,
+                          //   item.table
+                          // )
+                          {
+                            item.player1Input = true
+                            setPlayer1Input(true)
+                            console.log(item.player1Input)
+                          }
+                        }
+                      >
+                        <Text
+                          style={tw.style(
+                            'text-xl',
+                            'font-bold',
+                            'text-center'
+                          )}
+                        >
+                          Hráč 1.
+                        </Text>
+                      </TouchableOpacity>
+
+                      {item.player1Input && player1Input ? (
+                        <View style={tw.style('m-1.5')}>
+                          <Text style={tw.style('text-xl', 'font-semibold')}>
+                            Zadaj skóre zápasu:
+                          </Text>
+                          <TextInput
+                            id="scoreInput"
+                            style={styles.input}
+                            label="Name"
+                            placeholder="Meno"
+                            value={score.value}
+                            onChangeText={(text) => setScore({ value: text })}
+                          />
+                          <CustomButton
+                            title="Potvrdiť"
+                            style={{ width: '80%', marginTop: 24 }}
+                            onPressFunction={() => {
+                              const regex = /^([0-9]{1})+:([0-9]{1})$/
+                              if (!regex.test(score.value)) {
+                                Alert.alert('Error', 'Zlý format')
+                              } else {
+                                setWinner(
+                                  item.playerOne.id,
+                                  item.playerOne.id,
+                                  item.playerTwo.id,
+                                  item.table
+                                )
+                                setPlayer1Input(false)
+                                item.player1Input = false
+                              }
+                            }}
+                          />
+                        </View>
+                      ) : (
+                        <></>
+                      )}
+                    </View>
+                    <View>
+                      <TouchableOpacity
+                        style={tw.style(
+                          'bg-yellow-500',
+                          'h-10',
+                          'rounded-md',
+                          'm-1.5',
+                          'items-center',
+                          'justify-center'
+                        )}
+                        onPress={() => {
+                          item.player2Input = true
+                          setPlayer2Input(true)
+                        }}
+                      >
+                        <Text
+                          style={tw.style(
+                            'text-xl',
+                            'font-bold',
+                            'text-center'
+                          )}
+                        >
+                          Hráč 2.
+                        </Text>
+                      </TouchableOpacity>
+                      {item.player2Input && player2Input ? (
+                        <View style={tw.style('m-1.5')}>
+                          <Text style={tw.style('text-xl', 'font-semibold')}>
+                            Zadaj skóre zápasu:
+                          </Text>
+                          <TextInput
+                            id="score2Input"
+                            style={styles.input}
+                            label="Name"
+                            placeholder="Meno"
+                            value={score.value}
+                            onChangeText={(text) => setScore({ value: text })}
+                          />
+                          <CustomButton
+                            title="Potvrdiť"
+                            style={{ width: '80%', marginTop: 24 }}
+                            onPressFunction={() => {
+                              const regex = /^([0-9]{1})+:([0-9]{1})$/
+                              if (!regex.test(score.value)) {
+                                Alert.alert('Error', 'Zlý format')
+                              } else {
+                                setWinner(
+                                  item.playerTwo.id,
+                                  item.playerOne.id,
+                                  item.playerTwo.id,
+                                  item.table
+                                )
+                                item.player2Input = false
+                                setPlayer2Input(false)
+                              }
+                            }}
+                          />
+                        </View>
+                      ) : (
+                        <></>
+                      )}
+                    </View>
+                  </View>
+                ) : (
+                  <></>
+                )}
+              </View>
             </View>
           </View>
         )}
