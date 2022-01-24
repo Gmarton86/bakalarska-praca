@@ -37,6 +37,9 @@ export default function Create({ navigation }) {
   const [competitor, setCompetitor] = useState([])
   const [reference, setReference] = useState()
   const [name, setName] = useState({ value: '' })
+  const [place, setPlace] = useState({ value: '' })
+  const [date, setDate] = useState({ value: '' })
+  const [time, setTime] = useState({ value: '' })
   const [NumberOfTables, setNumberOfTables] = useState({ value: '0' })
   const [match, setMatch] = useState([])
   var counterOfTables = 0
@@ -211,9 +214,9 @@ export default function Create({ navigation }) {
         // })
 
         tx.executeSql(
-          'INSERT INTO Tournaments (Name, Tables, AdminID) VALUES (?, ?, ?)',
+          'INSERT INTO Tournaments (Name, Tables, AdminID, Time, Date, Place) VALUES (?, ?, ?, ?, ?, ?)',
           //insert adminID
-          [name.value, tables, adminID]
+          [name.value, tables, adminID, time.value, date.value, place.value]
         )
 
         generateTournamentMatches()
@@ -263,7 +266,7 @@ export default function Create({ navigation }) {
     <View style={styles.body}>
       <ScrollView nestedScrollEnabled={true}>
         <BackButton goBack={visitHome} />
-        <Text style={styles.text}>Tournament creation</Text>
+        <Text style={styles.text}>Tvorba turnaja</Text>
         <View>
           <Text style={tw.style('text-xl', 'font-semibold')}>
             Zadaj meno turnaja:
@@ -290,6 +293,45 @@ export default function Create({ navigation }) {
             maxLength={2}
             value={NumberOfTables.value}
             onChangeText={(text) => setNumberOfTables({ value: text })}
+          />
+        </View>
+        <View>
+          <Text style={tw.style('text-xl', 'font-semibold')}>
+            Zadaj miesto turnaja:
+          </Text>
+          <TextInput
+            id="placeInput"
+            style={styles.input}
+            label="Name"
+            placeholder="miesto"
+            value={place.value}
+            onChangeText={(text) => setPlace({ value: text })}
+          />
+        </View>
+        <View>
+          <Text style={tw.style('text-xl', 'font-semibold')}>
+            Zadaj dátum turnaja:
+          </Text>
+          <TextInput
+            id="dateInput"
+            style={styles.input}
+            label="Name"
+            placeholder="dátum"
+            value={date.value}
+            onChangeText={(text) => setDate({ value: text })}
+          />
+        </View>
+        <View>
+          <Text style={tw.style('text-xl', 'font-semibold')}>
+            Zadaj čas turnaja:
+          </Text>
+          <TextInput
+            id="timeInput"
+            style={styles.input}
+            label="Name"
+            placeholder="čas"
+            value={time.value}
+            onChangeText={(text) => setTime({ value: text })}
           />
         </View>
         <View style={styles.searchInput}>

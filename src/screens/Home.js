@@ -3,7 +3,7 @@ import {
   Alert,
   FlatList,
   RefreshControl,
-  ScrollView,
+  TouchableOpacity,
   StyleSheet,
   Text,
   View,
@@ -12,6 +12,7 @@ import TextButton from '../utils/textButton'
 import SQLite from 'react-native-sqlite-storage'
 import CustomButton from '../utils/customButton'
 import tw from 'tailwind-react-native-classnames'
+import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserType } from '../redux/actions'
 
@@ -47,13 +48,16 @@ export default function Tournaments({ navigation }) {
     tournament.pop()
     try {
       db.transaction((tx) => {
-        tx.executeSql('SELECT Name FROM Tournaments', [], (tx, results) => {
+        tx.executeSql('SELECT Name, Time, Date, Place FROM Tournaments', [], (tx, results) => {
           var len = results.rows.length
           console.log('Number of tournaments: ' + len)
           if (len > 0) {
             for (let i = 0; i < len; i++) {
               var name = results.rows.item(i).Name
-              setTournament((prevState) => [...prevState, { name }])
+              let place = results.rows.item(i).Place
+              let time = results.rows.item(i).Time
+              let date = results.rows.item(i).Date
+              setTournament((prevState) => [...prevState, { name, place, time, date }])
             }
           }
         })
@@ -84,7 +88,7 @@ export default function Tournaments({ navigation }) {
   }
 
   const showCredentials = () => {
-    Alert.alert(`name: ${trainerCredential.name}\npassword: ${trainerPasswd}`)
+    Alert.alert(`Rozhodca`,`meno: ${trainerCredential.name}\nheslo: ${trainerPasswd}`)
   }
 
   return (
@@ -118,7 +122,7 @@ export default function Tournaments({ navigation }) {
         keyExtractor={(item, index) => index.toString()}
         data={tournament}
         renderItem={({ item }) => (
-          <View>
+          <View style={tw.style('flex', 'flex-row', 'items-center')}>
             <CustomButton
               title={item.name}
               color="#1eb900"
@@ -128,6 +132,37 @@ export default function Tournaments({ navigation }) {
                 navigation.navigate('Tournament', item)
               }}
             />
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  `Podrobnosti`, `miesto: ${item.place}\ndátum: ${item.date}\nčas: ${item.time}`
+                )
+                // try {
+                //   db.transaction((tx) => {
+                //     tx.executeSql(
+                //       'ALTER TABLE Tournaments ADD COLUMN Time TEXT'
+                //     )
+                //     tx.executeSql(
+                //       'ALTER TABLE Tournaments ADD COLUMN Date TEXT'
+                //     )
+                //     tx.executeSql(
+                //       'ALTER TABLE Tournaments ADD COLUMN Place TEXT'
+                //     )
+                //   })
+                // } catch (error) {
+                //   console.log(error)
+                // }
+              }
+                
+              }
+            >
+              <Icon
+                name="info-circle"
+                size={30}
+                color="#4ae"
+                style={tw.style('ml-3')}
+              />
+            </TouchableOpacity>
           </View>
         )}
         refreshControl={
