@@ -15,6 +15,8 @@ import tw from 'tailwind-react-native-classnames'
 import CustomButton from '../utils/customButton'
 import { useDispatch, useSelector } from 'react-redux'
 import { setMatches, setUserType } from '../redux/actions'
+import Icon from 'react-native-vector-icons/FontAwesome5'
+import ImageModal from 'react-native-image-modal'
 
 const db = SQLite.openDatabase(
   {
@@ -48,6 +50,9 @@ export default function Tournament({ route, navigation }) {
   const [adminsID, setAdminsID] = useState(0)
   const [score, setScore] = useState({ value: '' })
   const { name } = route.params
+  const [spider8, setSpider8] = useState(false)
+  const [spider16, setSpider16] = useState(false)
+  const [spider32, setSpider32] = useState(false)
 
   const { matches, userType, adminID } = useSelector(
     (state) => state.playerReducer
@@ -540,9 +545,80 @@ export default function Tournament({ route, navigation }) {
       <View>
         <BackButton goBack={visitHome} />
       </View>
-      <Text style={styles.text}>
-        Kolo zápasov: {round}/{rounds}
-      </Text>
+      <View style={tw.style('flex', 'flex-row')}>
+        <Text style={styles.text}>
+          Kolo zápasov: {round}/{rounds}
+        </Text>
+        <View>
+          <TouchableOpacity
+            onPress={() => {
+              if (rounds === 6) {
+                setSpider32(true)
+              } else if (rounds === 5) {
+                setSpider16(true)
+              } else {
+                setSpider8(true)
+              }
+            }}
+          >
+            <Icon name="spider" size={30} style={tw.style('pl-32', 'pt-2')} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      {spider8 ? (
+        <ImageModal
+          resizeMode="contain"
+          imageBackgroundColor="#000000"
+          style={{
+            width: 400,
+            height: 500,
+          }}
+          source={{
+            uri: 'https://www.linkpicture.com/q/8rounds_2.png',
+          }}
+          onClose={() => {
+            setSpider8(false)
+          }}
+        />
+      ) : (
+        <></>
+      )}
+      {spider16 ? (
+        <ImageModal
+          resizeMode="contain"
+          imageBackgroundColor="#000000"
+          style={{
+            width: 400,
+            height: 500,
+          }}
+          source={{
+            uri: 'https://www.linkpicture.com/q/16rounds_1.png',
+          }}
+          onClose={() => {
+            setSpider16(false)
+          }}
+        />
+      ) : (
+        <></>
+      )}
+      {spider32 ? (
+        <ImageModal
+          resizeMode="contain"
+          imageBackgroundColor="#000000"
+          style={{
+            width: 400,
+            height: 500,
+          }}
+          source={{
+            uri: 'https://www.linkpicture.com/q/32rounds_1.png',
+          }}
+          onClose={() => {
+            setSpider32(false)
+          }}
+        />
+      ) : (
+        <></>
+      )}
       <FlatList
         keyExtractor={(item, index) => index.toString()}
         data={matches}
@@ -550,7 +626,8 @@ export default function Tournament({ route, navigation }) {
         initialNumToRender={4}
         renderItem={({ item, index }) => (
           <View>
-            {(lines.find((e) => e === index + 1) !== undefined) && (index+1 !== matches.length) ? (
+            {lines.find((e) => e === index + 1) !== undefined &&
+            index + 1 !== matches.length ? (
               <View
                 style={tw.style(
                   'bg-green-500',
@@ -559,7 +636,9 @@ export default function Tournament({ route, navigation }) {
                   'mb-2',
                   'mt-2'
                 )}
-              ><Text style={tw.style('text-center')}>Ďalšie kolo</Text></View>
+              >
+                <Text style={tw.style('text-center')}>Ďalšie kolo</Text>
+              </View>
             ) : (
               <></>
             )}
