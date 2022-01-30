@@ -78,7 +78,6 @@ export default function Create({ navigation }) {
 
   const selectAlgorithm = () => {
     if (competitor.length <= 8) {
-      Alert.alert('Minimálný počet hračov je 9')
       return 0
     }
     if (competitor.length <= 16) {
@@ -195,9 +194,16 @@ export default function Create({ navigation }) {
 
   const createTournament = () => {
     var tables = parseInt(NumberOfTables.value)
-    if(tables <= 0 || name.value === ''){
-      Alert.alert('Udaje turnaja sú chybné')
-      return -1; 
+    if (
+      tables <= 0 ||
+      name.value === '' ||
+      date.value === '' ||
+      place.value === '' ||
+      time.value === '' ||
+      selected.length < 8
+    ) {
+      Alert.alert('Chyba', 'Udaje turnaja sú chybné')
+      return -1
     }
     //console.log(tables)
     //console.log(name.value)
