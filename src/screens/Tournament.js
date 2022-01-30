@@ -109,7 +109,14 @@ export default function Tournament({ route, navigation }) {
       ])
       //match.push(c)
     }
-    setRounds(find(player1))
+    find(player1).then((response) => {
+      console.log(response)
+      setRounds(response)
+      setRoundLines(response)
+    }).catch(e => {
+      console.log(e)
+    })
+    //setRounds(find(player1))
     setRound(findCurrentRound(newMatch) - 1)
 
     dispatch(setMatches(newMatch))
@@ -120,12 +127,16 @@ export default function Tournament({ route, navigation }) {
         freeTables.push(i)
       }
     }
-    setRoundLines(rounds)
     console.log(freeTables)
     return 0
   }
 
-  const setRoundLines = () => {
+  //  i = 4, sum = 2**4
+  //
+
+  const setRoundLines = (rounds) => {
+    console.log('setting lines')
+    console.log(rounds)
     let i = rounds - 1
     let sum = 0
     while (sum < 2 ** rounds && i > 0) {
@@ -137,18 +148,29 @@ export default function Tournament({ route, navigation }) {
   }
 
   const find = (competitor) => {
-    if (competitor.length < 8) {
-      return 3
-    }
-    if (competitor.length < 16) {
-      return 4
-    } else if (competitor.length < 32) {
-      return 5
-    } else if (competitor.length < 64) {
-      return 6
-    } else {
-      return 7
-    }
+    return new Promise ((resolve, rejected) => {
+      try {
+      setTimeout(() => {
+          let value
+          if (competitor.length < 8) {
+            value = 3
+          }
+          if (competitor.length < 16) {
+            value = 4
+          } else if (competitor.length < 32) {
+            value = 5
+          } else if (competitor.length < 64) {
+            value = 6
+          } else {
+            value = 7
+          }
+        console.log(value)
+        resolve(value)
+      },300)
+      } catch (e) {
+        rejected(`Error during setup: ${err}`)
+      }
+    })
   }
 
   const passTournamentData = async () => {
