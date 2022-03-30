@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   StyleSheet,
   Text,
@@ -12,40 +12,11 @@ import { emailValidator } from '../helpers/emailValidator'
 import { passwordValidator } from '../helpers/passwordValidator'
 import { nameValidator } from '../helpers/nameValidator'
 import CustomButton from '../utils/customButton'
-import SQLite from 'react-native-sqlite-storage'
 import tw from 'tailwind-react-native-classnames'
+import axios from 'axios'
 
-const db = SQLite.openDatabase(
-  {
-    name: 'LoginDB',
-    location: 'default',
-    createFromLocation: '../db/LoginDB.db',
-  },
-  () => {},
-  (error) => {
-    console.log(error)
-  }
-)
 
 export default function Register({ navigation }) {
-  useEffect(() => {
-    createTable()
-  }, [])
-
-  const createTable = () => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS ' +
-          'Users ' +
-          '(ID INTEGER PRIMARY KEY AUTOINCREMENT, Username TEXT, Password TEXT, TrainerUsr TEXT, TrainerPasswd TEXT, tournamentID INTEGER); '
-      )
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS ' +
-          'Players ' +
-          '(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Username TEXT, DateOfBirth INTEGER, Rank INTEGER); '
-      )
-    })
-  }
 
   const generateString = (length) => {
     var result = ''
@@ -74,27 +45,31 @@ export default function Register({ navigation }) {
       return
     } else {
       try {
-        db.transaction((tx) => {
-          tx.executeSql(
-            'SELECT Username FROM Users WHERE Username = ?',
-            [email.value],
-            (tx, results) => {
-              var len = results.rows.length
-              console.log('item:', results.rows.length)
-              if (len > 0) {
-                Alert.alert(
-                  'Použivateľ existuje!',
-                  'Použite iný email alebo obnovte heslo.'
-                )
-              } else {
-                var trainerUsr = 'trainer'
-                var trainerPasswd = generateString(7)
-                console.log(trainerPasswd)
-                console.log(trainerUsr)
-                tx.executeSql(
-                  'INSERT INTO Users (Username, Password, TrainerUsr, TrainerPasswd) VALUES (?, ?, ?, ?)',
-                  [email.value, password.value, trainerUsr, trainerPasswd]
-                )
+        axios
+          .get('http://10.0.2.2:8080/users/' + email.value)
+          .then((res) => {
+            console.log(res.data)
+            Alert.alert(
+              'Použivateľ existuje!',
+              'Použite iný email alebo obnovte heslo.'
+            )
+          })
+          .catch(() => {
+            var trainerUsr = 'trainer'
+            var trainerPasswd = generateString(7)
+            console.log(trainerPasswd)
+            console.log(trainerUsr)
+
+            axios
+              .post('http://10.0.2.2:8080/users', {
+                username: email.value,
+                password: password.value,
+                trainerUsr: trainerUsr,
+                trainerPasswd: trainerPasswd,
+                tournamentID: undefined,
+              })
+              .then((res) => {
+                console.log(res.data)
                 Alert.alert(
                   'Úspešné',
                   'Zapíš si trenerové údaje! Meno: ' +
@@ -102,12 +77,9 @@ export default function Register({ navigation }) {
                     ', Heslo: ' +
                     trainerPasswd
                 )
-              }
-            }
-          )
-        })
-
-        navigation.replace('Login')
+                navigation.replace('Login')
+              })
+          })
       } catch (error) {
         console.log(error)
       }
@@ -152,6 +124,7 @@ export default function Register({ navigation }) {
         label="Name"
         returnKeyType="next"
         value={repeatPassword.value}
+        secureTextEntryr
         onChangeText={(text) => setRepeatPassword({ value: text, error: '' })}
       />
       <CustomButton

@@ -9,23 +9,12 @@ import {
 } from 'react-native'
 import CustomButton from '../utils/customButton'
 import BackButton from '../utils/backButton'
-
-import SQLite from 'react-native-sqlite-storage'
+import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserType, setTrainerPasswd, setAdminID } from '../redux/actions'
 import tw from 'tailwind-react-native-classnames'
 
 
-const db = SQLite.openDatabase(
-  {
-    name: 'LoginDB',
-    location: 'default',
-  },
-  () => {},
-  (error) => {
-    console.log(error)
-  }
-)
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState({ value: '', error: '' })
@@ -34,32 +23,6 @@ export default function Login({ navigation }) {
   const { userType } = useSelector((state) => state.playerReducer)
   const dispatch = useDispatch()
 
-  // useEffect(() => {
-  //   getData();
-  // }, [])
-
-  // const getData = () => {
-  //   try {
-
-  //     db.transaction((tx) => {
-  //       tx.executeSql(
-  //         "SELECT Username, Password FROM Users",
-  //         [],
-  //         (tx, results) => {
-  //           var len = results.rows.length;
-  //           if (len > 0) {
-  //             var username = results.rows.item(0).Username;
-  //             var password = results.rows.item(0).Password;
-  //             setEmailDB(toString(username));
-  //               setPasswordDB(toString(password));
-  //           }
-  //         }
-  //       );
-  //     });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
 
   const validateUser = (userType) => {
     if (userType === 'trainer') {
@@ -72,50 +35,51 @@ export default function Login({ navigation }) {
   //admin passwd: bffCyFd
   const onLoginPressed = () => {
     try {
-      db.transaction((tx) => {
-        if (email.value !== 'trainer') {
-          tx.executeSql(
-            'SELECT ID, Username, Password, TrainerPasswd, TrainerUsr FROM Users WHERE Username = ? and Password = ?',
-            [email.value, password.value],
-            (tx, results) => {
-              var len = results.rows.length
-              if (len > 0) {
-                console.log(results.rows.item(0))
-                validateUser(email.value)
-                dispatch(setTrainerPasswd(results.rows.item(0).TrainerPasswd))
-                dispatch(setAdminID(results.rows.item(0).ID))
-              } else {
-                Alert.alert(
-                  'Nesprávne meno alebo heslo!',
-                  'Vytvorte konto alebo resetujte heslo.'
-                )
-              }
-            }
+      if(email.value !== 'trainer'){
+        axios
+          .get(
+            'http://10.0.2.2:8080/users/login/' +
+              email.value +
+              '/' +
+              password.value
           )
-        } else {
-          tx.executeSql(
-            'SELECT ID, Username, Password FROM Users WHERE TrainerUsr = ? and TrainerPasswd = ?',
-            [email.value, password.value],
-            (tx, results) => {
-              var len = results.rows.length
-              if (len > 0) {
-                validateUser(email.value)
-                dispatch(setTrainerPasswd(password.value))
-                dispatch(setAdminID(results.rows.item(0).ID))
-              } else {
-                Alert.alert(
-                  'Nesprávne meno alebo heslo!',
-                  'Vytvorte konto alebo resetujte heslo.'
-                )
-              }
-            }
+          .then((res) => {
+            console.log(res.data)
+            validateUser(email.value)
+            dispatch(setTrainerPasswd(res.data.TrainerPasswd))
+            dispatch(setAdminID(res.data.ID))
+            navigation.replace('Home')
+          })
+          .catch(() => {
+            Alert.alert(
+              'Nesprávne meno alebo heslo!',
+              'Vytvorte konto alebo resetujte heslo.'
+            )
+          })
+      } else {
+        axios
+          .get(
+            'http://10.0.2.2:8080/users/loginTrainer/' +
+              email.value +
+              '/' +
+              password.value
           )
-        }
-      })
+          .then((res) => {
+            console.log(res.data)
+            validateUser(email.value)
+            dispatch(setTrainerPasswd(res.data.TrainerPasswd))
+            dispatch(setAdminID(res.data.ID))
+            navigation.replace('Home')
+          })
+          .catch(() => {
+            Alert.alert(
+              'Nesprávne meno alebo heslo!',
+              'Vytvorte konto alebo resetujte heslo.'
+            )
+          })
+      }
     } catch (error) {
       console.log(error)
-    } finally {
-      navigation.replace('Home')
     }
   }
 
