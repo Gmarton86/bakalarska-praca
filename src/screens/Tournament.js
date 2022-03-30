@@ -584,28 +584,8 @@ export default function Tournament({ route, navigation }) {
 
   function deleteTournament() {
     try {
-      db.transaction((tx) => {
-        tx.executeSql(
-          'DELETE FROM Tournaments WHERE Name=?',
-          [name],
-          function (tx, results) {
-            console.error('Successfully Emptied')
-          },
-          function (tx, error) {
-            console.error('Error: ' + error.message)
-          }
-        )
-        tx.executeSql(
-          'DELETE FROM Matches WHERE TournamentName=?',
-          [name],
-          function (tx, results) {
-            console.error('Successfully Emptied')
-          },
-          function (tx, error) {
-            console.error('Error: ' + error.message)
-          }
-        )
-      })
+      axios.delete('http://10.0.2.2:8080/matches/' + name).then(console.log)
+      axios.delete('http://10.0.2.2:8080/tournaments/' + name).then(console.log)
     } catch (error) {
       console.log(error)
     }
