@@ -9,23 +9,12 @@ import {
 } from 'react-native'
 import BackButton from '../utils/backButton'
 import MultiSelect from 'react-native-multiple-select'
-import SQLite from 'react-native-sqlite-storage'
 import CustomButton from '../utils/customButton'
 import { LogBox } from 'react-native'
 import { useSelector } from 'react-redux'
 import tw from 'tailwind-react-native-classnames'
+import axios from 'axios'
 
-const db = SQLite.openDatabase(
-  {
-    name: 'LoginDB',
-    location: 'default',
-    createFromLocation: '../db/LoginDB.db',
-  },
-  () => {},
-  (error) => {
-    console.log(error)
-  }
-)
 
 export default function Create({ navigation }) {
   // const { name, age } = useSelector((state) => {state.playerReducer})
@@ -46,25 +35,9 @@ export default function Create({ navigation }) {
 
   useEffect(() => {
     LogBox.ignoreLogs(['VirtualizedLists should never be nested'])
-    createTable()
     renderPlayers()
     //console.log(name)
   }, [])
-
-  const createTable = () => {
-    db.transaction((tx) => {
-      // tx.executeSql(
-      //   'CREATE TABLE IF NOT EXISTS ' +
-      //     'Tournaments ' +
-      //     '(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Tables INTEGER, AdminID INTEGER); '
-      // )
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS ' +
-          'Matches ' +
-          '(ID INTEGER PRIMARY KEY AUTOINCREMENT, TournamentName TEXT, Player1ID INTEGER, Player2ID INTEGER, WinnerID INTEGER, Stol INTEGER); '
-      )
-    })
-  }
 
   const visitHome = () => {
     navigation.replace('Home')
@@ -131,53 +104,22 @@ export default function Create({ navigation }) {
 
   const renderPlayers = () => {
     try {
-      db.transaction((tx) => {
-        tx.executeSql('SELECT * FROM Players ', [], (tx, results) => {
-          var len = results.rows.length
-          console.log('Number of players: ' + len)
-          if (len > 0) {
-            for (let i = 0; i < len; i++) {
-              var name =
-                results.rows.item(i).Name + ' ' + results.rows.item(i).Username
-              var id = results.rows.item(i).ID.toString()
-              let rank = results.rows.item(i).Rank
-              let player = { id, name, rank }
-              //console.log(player)
-              players.push(player)
-            }
+      axios
+        .get('http://10.0.2.2:8080/players')
+        .then((res) => {
+          console.log(res.data)
+          for (let i = 0; i < res.data.length; i++) {
+            var name = res.data[i].username + ' ' + res.data[i].surname
+            var id = res.data[i].id.toString()
+            let rank = res.data[i].rank
+            let player = { id, name, rank }
+            //console.log(player)
+            players.push(player)
           }
         })
-
-        tx.executeSql(
-          'SELECT * FROM sqlite_master WHERE type=?',
-          ['table'],
-          (tx, results) => {
-            var len = results.rows.length
-            for (let i = 0; i < len; i++) {
-              console.log('exist: ' + results.rows.item(i).name)
-            }
-          }
-        )
-        // tx.executeSql(
-        //   'INSERT INTO Tournaments (Name, Tables, AdminID) VALUES (?, ?, ?)',
-        //   //insert adminID
-        //   ['ok', 3, 1]
-        // )
-        //  tx.executeSql(
-        //   "DELETE FROM Matches", [], () => {console.log('success')}, error => {console.log(error)}
-        // )
-        // tx.executeSql(
-        //   "DELETE FROM Tournaments", [], () => {console.log('success')}, error => {console.log(error)}
-        // )
-        tx.executeSql('SELECT Name FROM Tournaments', [], (tx, results) => {
-          var len = results.rows.length
-          console.log('Number of tournaments: ' + len)
+        .catch((error) => {
+          console.log(error)
         })
-        tx.executeSql('SELECT * FROM Matches', [], (tx, results) => {
-          var len = results.rows.length
-          console.log('Number of Matches: ' + len)
-        })
-      })
     } catch (error) {
       console.log(error)
     }
@@ -207,58 +149,57 @@ export default function Create({ navigation }) {
     }
     //console.log(tables)
     //console.log(name.value)
-    try {
-      db.transaction((tx) => {
-        // tx.executeSql('SELECT * FROM Users ', [], (tx, results) => {
-        //   var len = results.rows.length
-        //   console.log('Number of users: ' + len)
-        //   if (len >= 1) {
-        //     for (let i = 0; i < len; i++) {
-        //       console.log(results.rows.item(i))
-        //     }
-        //   }
-        // })
 
-        tx.executeSql(
-          'INSERT INTO Tournaments (Name, Tables, AdminID, Time, Date, Place) VALUES (?, ?, ?, ?, ?, ?)',
-          //insert adminID
-          [name.value, tables, adminID, time.value, date.value, place.value]
-        )
+    try {
+      axios
+        .post('http://10.0.2.2:8080/tournaments', {
+          name: name.value,
+          tables: tables,
+          adminID: adminID,
+          time: time.value,
+          date: date.value,
+          place: place.value
+        })
+        .then((res) => {
+          console.log(res.data)
+        })
 
         generateTournamentMatches()
 
         for (var i = 0; i < match.length; i++) {
           if (match[i].playerTwo == 0) {
-            tx.executeSql(
-              'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, WinnerID) VALUES (?, ?, ?, ?)',
-              [
-                name.value,
-                match[i].playerOne,
-                match[i].playerTwo,
-                match[i].playerOne,
-              ]
-            )
+            axios
+              .post('http://10.0.2.2:8080/matches', {
+                tournamentName: name.value,
+                player1ID: match[i].playerOne,
+                player2ID: match[i].playerTwo,
+                winnerId: match[i].playerOne
+              })
+              .then((res) => {
+                console.log(res.data)
+              })
           } else {
             if (counterOfTables < NumberOfTables.value) {
               counterOfTables++
             } else {
               counterOfTables = undefined
             }
-            tx.executeSql(
-              'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, Stol) VALUES (?, ?, ?, ?)',
-              [
-                name.value,
-                match[i].playerOne,
-                match[i].playerTwo,
-                counterOfTables,
-              ]
-            )
+            axios
+              .post('http://10.0.2.2:8080/matches', {
+                tournamentName: name.value,
+                player1ID: match[i].playerOne,
+                player2ID: match[i].playerTwo,
+                winnerId: null,
+                stol: counterOfTables
+              })
+              .then((res) => {
+                console.log(res.data)
+              })
           }
         }
-        // console.log('success')
 
         visitHome()
-      })
+
     } catch (error) {
       console.log(error)
     }

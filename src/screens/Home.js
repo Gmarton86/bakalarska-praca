@@ -15,6 +15,7 @@ import tw from 'tailwind-react-native-classnames'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserType } from '../redux/actions'
+import axios from 'axios'
 
 const db = SQLite.openDatabase(
   {
@@ -47,21 +48,22 @@ export default function Tournaments({ navigation }) {
   const renderTournaments = async () => {
     tournament.pop()
     try {
-      db.transaction((tx) => {
-        tx.executeSql('SELECT Name, Time, Date, Place FROM Tournaments', [], (tx, results) => {
-          var len = results.rows.length
-          console.log('Number of tournaments: ' + len)
-          if (len > 0) {
-            for (let i = 0; i < len; i++) {
-              var name = results.rows.item(i).Name
-              let place = results.rows.item(i).Place
-              let time = results.rows.item(i).Time
-              let date = results.rows.item(i).Date
-              setTournament((prevState) => [...prevState, { name, place, time, date }])
-            }
+      axios
+        .get(
+          'http://10.0.2.2:8080/tournaments')
+        .then((res) => {
+          console.log(res.data)
+          for (let i = 0; i < res.data.length; i++) {
+            var name = res.data[i].name
+            let place = res.data[i].place
+            let time = res.data[i].time
+            let date = res.data[i].date
+            setTournament((prevState) => [
+              ...prevState,
+              { name, place, time, date },
+            ])
           }
         })
-      })
     } catch (error) {
       console.log(error)
     }
