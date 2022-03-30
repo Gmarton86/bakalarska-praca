@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setMatches, setUserType } from '../redux/actions'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import ImageModal from 'react-native-image-modal'
+import axios from 'axios'
 
 const db = SQLite.openDatabase(
   {
@@ -109,13 +110,15 @@ export default function Tournament({ route, navigation }) {
       ])
       //match.push(c)
     }
-    find(player1).then((response) => {
-      console.log(response)
-      setRounds(response)
-      setRoundLines(response)
-    }).catch(e => {
-      console.log(e)
-    })
+    find(player1)
+      .then((response) => {
+        console.log(response)
+        setRounds(response)
+        setRoundLines(response)
+      })
+      .catch((e) => {
+        console.log(e)
+      })
     //setRounds(find(player1))
     setRound(findCurrentRound(newMatch) - 1)
 
@@ -148,9 +151,9 @@ export default function Tournament({ route, navigation }) {
   }
 
   const find = (competitor) => {
-    return new Promise ((resolve, rejected) => {
+    return new Promise((resolve, rejected) => {
       try {
-      setTimeout(() => {
+        setTimeout(() => {
           let value
           if (competitor.length < 8) {
             value = 3
@@ -164,9 +167,9 @@ export default function Tournament({ route, navigation }) {
           } else {
             value = 7
           }
-        console.log(value)
-        resolve(value)
-      },300)
+          console.log(value)
+          resolve(value)
+        }, 300)
       } catch (e) {
         rejected(`Error during setup: ${err}`)
       }
@@ -176,115 +179,87 @@ export default function Tournament({ route, navigation }) {
   const passTournamentData = async () => {
     var playerOne
     var playerTwo
+
     try {
-      await db.transaction((tx) => {
-        tx.executeSql(
-          'Select Tables, AdminID FROM Tournaments WHERE Name = ?',
-          [name],
-          (tx, results) => {
-            console.log(results.rows.item(0))
-            numberOfTables.value = results.rows.item(0).Tables
-            setAdminsID(results.rows.item(0).AdminID)
-            console.log('admin ID: ' + results.rows.item(0).AdminID)
-            console.log('usertype: ' + userType)
-            console.log('logged admin: ' + adminID)
-            if (
-              userType !== 'player' &&
-              adminID === results.rows.item(0).AdminID
-            ) {
-              setWinnerVisibility(true)
-              setIsOwner(true)
-            }
+      await axios
+        .get('http://10.0.2.2:8080/tournaments/' + name)
+        .then((res) => {
+          console.log(res.data)
+          numberOfTables.value = res.data.tables
+          setAdminsID(res.data.adminID)
+          if (userType !== 'player' && adminID === res.data.adminID) {
+            setWinnerVisibility(true)
+            setIsOwner(true)
           }
-        )
-        tx.executeSql(
-          'SELECT Player1ID, Player2ID, Stol, WinnerID, Score FROM Matches WHERE Matches.TournamentName=?',
-          [name],
-          async (err, results) => {
-            var len = results.rows.length
-            for (let i = 0; i < len; i++) {
-              //console.log('ix')
-              tx.executeSql(
-                'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
-                [results.rows.item(i).Player1ID],
-                (tx, result1) => {
-                  let id = result1.rows.item(0).ID
-                  let name = result1.rows.item(0).Name
-                  let username = result1.rows.item(0).Username
+        })
+
+      await axios
+        .get('http://10.0.2.2:8080/matches/' + name)
+        .then(async (res) => {
+          console.log(res.data)
+          for (let i = 0; i < res.data.length; i++) {
+            await axios
+              .get('http://10.0.2.2:8080/players/' + res.data[i].player1ID)
+              .then((res) => {
+                let id = res.data.id
+                let name = res.data.username
+                let username = res.data.surname
+                playerOne = { id, name, username }
+                player1.push(playerOne)
+              })
+
+            if (res.data[i].player2ID != 0) {
+              await axios
+                .get('http://10.0.2.2:8080/players/' + res.data[i].player2ID)
+                .then((res) => {
+                  let id = res.data.id
+                  let name = res.data.username
+                  let username = res.data.surname
                   playerOne = { id, name, username }
-                  player1.push(playerOne)
-                }
-              )
+                  player2.push(playerOne)
+                })
+            } else {
+              let id = 0
+              let name = ''
+              let username = ''
+              playerTwo = { id, name, username }
+              player2.push(playerTwo)
+            }
 
-              if (results.rows.item(i).Player2ID != 0) {
-                tx.executeSql(
-                  'SELECT Name, Username, ID FROM Players WHERE Players.ID=?',
-                  [results.rows.item(i).Player2ID],
-                  (tx, result2) => {
-                    let id = result2.rows.item(0).ID
-                    let name = result2.rows.item(0).Name
-                    let username = result2.rows.item(0).Username
-                    playerTwo = { id, name, username }
-                    player2.push(playerTwo)
-                  }
-                )
-              } else {
-                let id = 0
-                let name = ''
-                let username = ''
-                playerTwo = { id, name, username }
-                player2.push(playerTwo)
-              }
-              if (results.rows.item(i).Stol === null) {
-                tables.push('')
-              } else {
-                tables.push(results.rows.item(i).Stol)
-              }
-              if (results.rows.item(i).Score === null) {
-                scores.push('')
-              } else {
-                scores.push(results.rows.item(i).Score)
-              }
+            if (res.data[i].stol === null) {
+              tables.push('')
+            } else {
+              tables.push(res.data[i].stol)
+            }
 
-              //console.log(results.rows.item(i).WinnerID)
-              if (
-                results.rows.item(i).WinnerID != null &&
-                results.rows.item(i).WinnerID != 0
-              ) {
-                tx.executeSql(
-                  'SELECT ID, Name, Username FROM Players WHERE Players.ID=?',
-                  [results.rows.item(i).WinnerID],
+            if (res.data[i].score === null) {
+              scores.push('')
+            } else {
+              scores.push(res.data[i].score)
+            }
 
-                  (tx, result3) => {
-                    if (result3.rows.length === 0) {
-                      console.log(results.rows.item(i).WinnerID)
-                    }
-                    let id = result3.rows.item(0).ID
-                    let name = result3.rows.item(0).Name
-                    let username = result3.rows.item(0).Username
-                    let winner = { id, name, username }
-                    let syncWinner = { pos: i, winner: winner }
-                    //console.log(syncWinner)
-                    winners.push(syncWinner)
-                  }
-                )
-                //console.log('i')
-              } else {
-                let id = 0
-                let name = ''
-                let username = ''
-                let winner = { id, name, username }
-                let syncWinner = { pos: i, winner: winner }
-                //console.log(syncWinner)
-                winners.push(syncWinner)
-              }
-              //console.log('i')
+            if (res.data[i].winnerId != null && res.data[i].winnerId != 0) {
+              await axios
+                .get('http://10.0.2.2:8080/players/' + res.data[i].winnerId)
+                .then((res) => {
+                  let id = res.data.id
+                  let name = res.data.username
+                  let username = res.data.surname
+                  let winner = { id, name, username }
+                  let syncWinner = { pos: i, winner: winner }
+                  winners.push(syncWinner)
+                })
+            } else {
+              let id = 0
+              let name = ''
+              let username = ''
+              let winner = { id, name, username }
+              let syncWinner = { pos: i, winner: winner }
+
+              winners.push(syncWinner)
             }
           }
-        )
-      })
-      // wait();
-      //console.log('no takr')
+        })
     } catch (error) {
       console.log(error)
     } finally {
@@ -335,12 +310,17 @@ export default function Tournament({ route, navigation }) {
         winner: { id: 0, name: '', username: '' },
         score: '',
       }
-      db.transaction((tx) => {
-        tx.executeSql(
-          'INSERT INTO Matches (TournamentName, Player1ID, Player2ID, WinnerID) VALUES (?, ?, ?, ?)',
-          [name, matches[posOne].winner.id, matches[posTwo].winner.id, 0]
-        )
-      })
+
+      axios
+        .post('http://10.0.2.2:8080/matches', {
+          tournamentName: name,
+          player1ID: matches[posOne].winner.id,
+          player2ID: matches[posTwo].winner.id,
+          winnerId: 0,
+        })
+        .then((res) => {
+          console.log(res.data)
+        })
 
       arr = [...arr, c]
       //console.log(c)
@@ -354,137 +334,248 @@ export default function Tournament({ route, navigation }) {
 
   const setWinner = (winnerID, player1ID, player2ID, table) => {
     console.log(table)
+
     try {
-      db.transaction((tx) => {
-        tx.executeSql(
-          'SELECT ID, Name, Username FROM Players WHERE ID = ?',
-          [parseInt(winnerID)],
-          (err, result) => {
-            var len = result.rows.length
-            if (len == 0) {
-              Alert.alert('winner doesnt exist')
-            } else {
-              let id = result.rows.item(0).ID
-              let name = result.rows.item(0).Name
-              let username = result.rows.item(0).Username
-              let winner = { id, name, username }
-              //console.log(winner)
-              //find if the winner is set
-              let currentWinner = matches
-                .reverse()
-                .find(
-                  (match) =>
-                    match.playerOne.id === parseInt(player1ID) &&
-                    match.playerTwo.id === parseInt(player2ID)
-                )
-              if (currentWinner.winner.id !== 0) {
-                matches.reverse()
-                let index = matches.indexOf(currentWinner)
-                let sliceArray = matches.slice(index + 1)
-                sliceArray.forEach((element) => {
-                  if (element.playerOne.id === currentWinner.winner.id) {
-                    tx.executeSql(
-                      'UPDATE Matches SET WinnerID = ?, Player1ID = ?, Stol = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
-                      [
-                        0,
-                        winner.id,
-                        null,
-                        null,
-                        element.playerOne.id,
-                        element.playerTwo.id,
-                      ],
-                      (trans, result) => {
-                        console.log(result.rows.item(0))
-                      },
-                      (error) => {
-                        console.log(error)
-                      }
-                    )
-                    element.playerOne = winner
-                    element.table = ''
-                    element.winner = { id: 0, name: '', username: '' }
-                    element.score = ''
-                  }
-                  if (element.playerTwo.id === currentWinner.winner.id) {
-                    tx.executeSql(
-                      'UPDATE Matches SET WinnerID = ?, Player2ID = ?, Stol = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
-                      [
-                        0,
-                        winner.id,
-                        null,
-                        null,
-                        element.playerOne.id,
-                        element.playerTwo.id,
-                      ],
-                      (trans, result) => {
-                        console.log(result.rows.item(0))
-                      },
-                      (error) => {
-                        console.log(error)
-                      }
-                    )
-                    element.playerTwo = winner
-                    element.table = ''
-                    element.winner = { id: 0, name: '', username: '' }
-                    element.score = ''
-                  }
-                })
-                tx.executeSql(
-                  'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
-                  [
-                    parseInt(winner.id),
-                    score.value,
-                    parseInt(currentWinner.playerOne.id),
-                    parseInt(currentWinner.playerTwo.id),
-                  ],
-                  (trans, result) => {
-                    console.log(result.rows.item(0))
-                  },
-                  (error) => {
-                    console.log(error)
-                  }
-                )
-                console.log(winner)
-                currentWinner.winner = winner
-                currentWinner.score = score.value
-                dispatch(setMatches(matches))
-              } else {
-                matches.find(
-                  (match) =>
-                    match.playerOne.id === parseInt(player1ID) &&
-                    match.playerTwo.id === parseInt(player2ID)
-                ).winner = winner
-                matches.find(
-                  (match) =>
-                    match.playerOne.id === parseInt(player1ID) &&
-                    match.playerTwo.id === parseInt(player2ID)
-                ).score = score.value
-                dispatch(setMatches(matches.reverse()))
-                //console.log(matches)
-                tx.executeSql(
-                  'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
-                  [
-                    parseInt(winnerID),
-                    score.value,
-                    parseInt(player1ID),
-                    parseInt(player2ID),
-                  ]
-                )
-                if (
-                  matches.find((match) => match.winner.id === 0) === undefined
-                ) {
-                  nextRoundGenerator(table)
-                } else {
-                  setNextMatch(table, matches, winnerID)
-                }
+      axios
+        .get('http://10.0.2.2:8080/players/' + parseInt(winnerID))
+        .then((res) => {
+          let id = res.data.id
+          let name = res.data.username
+          let username = res.data.surname
+          let winner = { id, name, username }
+          //console.log(winner)
+          //find if the winner is set
+          let currentWinner = matches
+            .reverse()
+            .find(
+              (match) =>
+                match.playerOne.id === parseInt(player1ID) &&
+                match.playerTwo.id === parseInt(player2ID)
+            )
+          if (currentWinner.winner.id !== 0) {
+            matches.reverse()
+            let index = matches.indexOf(currentWinner)
+            let sliceArray = matches.slice(index + 1)
+            sliceArray.forEach((element) => {
+              if (element.playerOne.id === currentWinner.winner.id) {
+                axios
+                  .post('http://10.0.2.2:8080/matches/update', {
+                    winnerID: 0,
+                    player1ID: element.playerOne.id,
+                    player2ID: element.playerTwo.id,
+                    updatePlayer1ID: winner.id,
+                    updatePlayer2ID: element.playerTwo.id,
+                    stol: null,
+                    score: null,
+                  })
+                  .then(console.log)
+                element.playerOne = winner
+                element.table = ''
+                element.winner = { id: 0, name: '', username: '' }
+                element.score = ''
               }
+              if (element.playerTwo.id === currentWinner.winner.id) {
+                axios
+                  .post('http://10.0.2.2:8080/matches/update', {
+                    winnerID: 0,
+                    player1ID: element.playerOne.id,
+                    player2ID: element.playerTwo.id,
+                    updatePlayer1ID: element.playerOne.id,
+                    updatePlayer2ID: winner.id,
+                    stol: null,
+                    score: null,
+                  })
+                  .then(console.log)
+
+                element.playerTwo = winner
+                element.table = ''
+                element.winner = { id: 0, name: '', username: '' }
+                element.score = ''
+              }
+            })
+            axios
+              .get(
+                'http://10.0.2.2:8080/matches/' +
+                  currentWinner.playerOne.id +
+                  '/' +
+                  currentWinner.playerTwo.id +
+                  '/' +
+                  score.value +
+                  '/' +
+                  parseInt(winner.id)
+              )
+              .then(console.log)
+            console.log(winner)
+            currentWinner.winner = winner
+            currentWinner.score = score.value
+            dispatch(setMatches(matches))
+          } else {
+            matches.find(
+              (match) =>
+                match.playerOne.id === parseInt(player1ID) &&
+                match.playerTwo.id === parseInt(player2ID)
+            ).winner = winner
+            matches.find(
+              (match) =>
+                match.playerOne.id === parseInt(player1ID) &&
+                match.playerTwo.id === parseInt(player2ID)
+            ).score = score.value
+            dispatch(setMatches(matches.reverse()))
+            //console.log(matches)
+            axios
+              .get(
+                'http://10.0.2.2:8080/matches/' +
+                  parseInt(player1ID) +
+                  '/' +
+                  parseInt(player2ID) +
+                  '/' +
+                  score.value +
+                  '/' +
+                  parseInt(winnerID)
+              )
+              .then(console.log)
+            if (matches.find((match) => match.winner.id === 0) === undefined) {
+              nextRoundGenerator(table)
+            } else {
+              setNextMatch(table, matches, winnerID)
             }
           }
-        )
-      })
+        })
     } catch (error) {
       console.log(error)
     }
+
+    // try {
+    //   db.transaction((tx) => {
+    //     tx.executeSql(
+    //       'SELECT ID, Name, Username FROM Players WHERE ID = ?',
+    //       [parseInt(winnerID)],
+    //       (err, result) => {
+    //         var len = result.rows.length
+    //         if (len == 0) {
+    //           Alert.alert('winner doesnt exist')
+    //         } else {
+    //           let id = result.rows.item(0).ID
+    //           let name = result.rows.item(0).Name
+    //           let username = result.rows.item(0).Username
+    //           let winner = { id, name, username }
+    //           //console.log(winner)
+    //           //find if the winner is set
+    //           let currentWinner = matches
+    //             .reverse()
+    //             .find(
+    //               (match) =>
+    //                 match.playerOne.id === parseInt(player1ID) &&
+    //                 match.playerTwo.id === parseInt(player2ID)
+    //             )
+    //           if (currentWinner.winner.id !== 0) {
+    //             matches.reverse()
+    //             let index = matches.indexOf(currentWinner)
+    //             let sliceArray = matches.slice(index + 1)
+    //             sliceArray.forEach((element) => {
+    //               if (element.playerOne.id === currentWinner.winner.id) {
+    //                 tx.executeSql(
+    //                   'UPDATE Matches SET WinnerID = ?, Player1ID = ?, Stol = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
+    //                   [
+    //                     0,
+    //                     winner.id,
+    //                     null,
+    //                     null,
+    //                     element.playerOne.id,
+    //                     element.playerTwo.id,
+    //                   ],
+    //                   (trans, result) => {
+    //                     console.log(result.rows.item(0))
+    //                   },
+    //                   (error) => {
+    //                     console.log(error)
+    //                   }
+    //                 )
+    //                 element.playerOne = winner
+    //                 element.table = ''
+    //                 element.winner = { id: 0, name: '', username: '' }
+    //                 element.score = ''
+    //               }
+    //               if (element.playerTwo.id === currentWinner.winner.id) {
+    //                 tx.executeSql(
+    //                   'UPDATE Matches SET WinnerID = ?, Player2ID = ?, Stol = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
+    //                   [
+    //                     0,
+    //                     winner.id,
+    //                     null,
+    //                     null,
+    //                     element.playerOne.id,
+    //                     element.playerTwo.id,
+    //                   ],
+    //                   (trans, result) => {
+    //                     console.log(result.rows.item(0))
+    //                   },
+    //                   (error) => {
+    //                     console.log(error)
+    //                   }
+    //                 )
+    //                 element.playerTwo = winner
+    //                 element.table = ''
+    //                 element.winner = { id: 0, name: '', username: '' }
+    //                 element.score = ''
+    //               }
+    //             })
+    //             tx.executeSql(
+    //               'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
+    //               [
+    //                 parseInt(winner.id),
+    //                 score.value,
+    //                 parseInt(currentWinner.playerOne.id),
+    //                 parseInt(currentWinner.playerTwo.id),
+    //               ],
+    //               (trans, result) => {
+    //                 console.log(result.rows.item(0))
+    //               },
+    //               (error) => {
+    //                 console.log(error)
+    //               }
+    //             )
+    //             console.log(winner)
+    //             currentWinner.winner = winner
+    //             currentWinner.score = score.value
+    //             dispatch(setMatches(matches))
+    //           } else {
+    //             matches.find(
+    //               (match) =>
+    //                 match.playerOne.id === parseInt(player1ID) &&
+    //                 match.playerTwo.id === parseInt(player2ID)
+    //             ).winner = winner
+    //             matches.find(
+    //               (match) =>
+    //                 match.playerOne.id === parseInt(player1ID) &&
+    //                 match.playerTwo.id === parseInt(player2ID)
+    //             ).score = score.value
+    //             dispatch(setMatches(matches.reverse()))
+    //             //console.log(matches)
+    //             tx.executeSql(
+    //               'UPDATE Matches SET WinnerID = ?, Score = ? WHERE Player1ID = ? AND Player2ID = ?',
+    //               [
+    //                 parseInt(winnerID),
+    //                 score.value,
+    //                 parseInt(player1ID),
+    //                 parseInt(player2ID),
+    //               ]
+    //             )
+    //             if (
+    //               matches.find((match) => match.winner.id === 0) === undefined
+    //             ) {
+    //               nextRoundGenerator(table)
+    //             } else {
+    //               setNextMatch(table, matches, winnerID)
+    //             }
+    //           }
+    //         }
+    //       }
+    //     )
+    //   })
+    // } catch (error) {
+    //   console.log(error)
+    // }
   }
 
   const visitHome = () => {
@@ -523,12 +614,16 @@ export default function Tournament({ route, navigation }) {
 
   const updateMatchDb = (table, playerOneID, playerTwoID) => {
     try {
-      db.transaction((tx) => {
-        tx.executeSql(
-          'UPDATE Matches SET Stol = ? WHERE Player1ID = ? AND Player2ID = ?',
-          [parseInt(table), parseInt(playerOneID), parseInt(playerTwoID)]
+      axios
+        .get(
+          'http://10.0.2.2:8080/matches/' +
+            parseInt(playerOneID) +
+            '/' +
+            parseInt(playerTwoID) +
+            '/' +
+            parseInt(table)
         )
-      })
+        .then(console.log)
     } catch (error) {
       console.log(error)
     }
@@ -790,7 +885,7 @@ export default function Tournament({ route, navigation }) {
                             id="scoreInput"
                             style={styles.input}
                             label="Name"
-                            placeholder="Meno"
+                            placeholder="Skóre"
                             value={score.value}
                             onChangeText={(text) => setScore({ value: text })}
                           />
@@ -852,7 +947,7 @@ export default function Tournament({ route, navigation }) {
                             id="score2Input"
                             style={styles.input}
                             label="Name"
-                            placeholder="Meno"
+                            placeholder="Skóre"
                             value={score.value}
                             onChangeText={(text) => setScore({ value: text })}
                           />
