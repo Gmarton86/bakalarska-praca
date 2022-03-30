@@ -2,20 +2,8 @@ import React, { useState } from 'react'
 import { StyleSheet, Text, View, TextInput, Alert } from 'react-native'
 import BackButton from '../utils/backButton'
 import CustomButton from '../utils/customButton'
-import SQLite from 'react-native-sqlite-storage'
 import tw from 'tailwind-react-native-classnames'
-
-const db = SQLite.openDatabase(
-  {
-    name: 'LoginDB',
-    location: 'default',
-    createFromLocation: '../db/LoginDB.db',
-  },
-  () => {},
-  (error) => {
-    console.log(error)
-  }
-)
+import axios from 'axios'
 
 export default function ResetPasswordScreen({ navigation }) {
   const [name, setName] = useState({ value: '' })
@@ -24,12 +12,18 @@ export default function ResetPasswordScreen({ navigation }) {
 
   function updatePassword() {
     try {
-      db.transaction((tx) => {
-        tx.executeSql('UPDATE Users SET Password = ? WHERE Username = ?', [
-          password.value,
-          name.value,
-        ])
-      })
+      axios
+        .get(
+          'http://10.0.2.2:8080/users/' +
+            name.value +
+            '/' +
+            password.value
+        )
+        .then((res) => {
+          console.log(res.data)
+        }).catch(error => {
+          console.log(error)
+        })
     } catch (error) {
       console.log(error)
     }
