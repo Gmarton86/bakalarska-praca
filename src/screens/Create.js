@@ -66,8 +66,6 @@ export default function Create({ navigation }) {
 
   const renderMatches = () => {
     var algorithm = selectAlgorithm()
-    console.log(algorithm)
-    console.log(competitor)
     var counter = algorithm * 2 - competitor.length
 
     var playerOne
@@ -84,9 +82,6 @@ export default function Create({ navigation }) {
       war = { playerOne, playerTwo }
       match.push(war)
     }
-    console.log("1 cyklus")
-    console.log(match)
-    console.log('1 cyklus')
 
     for (var i = algorithm - 1; i >= 0; i -= 2) {
       if (counter != 0) {
@@ -100,17 +95,13 @@ export default function Create({ navigation }) {
       match.push(war)
     }
 
-    console.log('2 cyklus')
-    console.log(match)
-    console.log('2 cyklus')
-
     if (counter != 0) {
       for (var i = 0; i < competitor.length - algorithm; i++) {
         match[match.length - 1 - i].playerTwo =
           competitor[competitor.length + i - (competitor.length - algorithm)].id
       }
     }
-    console.log(match)
+    
   }
 
   const renderPlayers = () => {
@@ -177,10 +168,6 @@ export default function Create({ navigation }) {
 
         generateTournamentMatches()
 
-        console.log("length of tournament")
-        console.log(match.length)
-        console.log(match)
-
         for (var i = 0; i < match.length; i++) {
           if (match[i].playerTwo == 0) {
             await axios
@@ -213,7 +200,7 @@ export default function Create({ navigation }) {
           }
         }
 
-        //visitHome()
+        visitHome()
 
     } catch (error) {
       console.log(error)
