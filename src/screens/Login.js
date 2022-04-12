@@ -68,7 +68,7 @@ export default function Login({ navigation }) {
             console.log(res.data)
             validateUser(email.value)
             dispatch(setTrainerPasswd(res.data.TrainerPasswd))
-            dispatch(setAdminID(res.data.ID))
+            dispatch(setAdminID(res.data.id))
             navigation.replace('Home')
           })
           .catch(() => {
