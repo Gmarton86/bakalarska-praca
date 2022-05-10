@@ -5,7 +5,7 @@ const Splash = ({ navigation }) => {
   useEffect(() => {
     setTimeout(() => {
       navigation.replace("Home");
-    }, 22000);
+    }, 2000);
   }, []);
 
   return (
